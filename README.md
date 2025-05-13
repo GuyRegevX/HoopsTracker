@@ -6,8 +6,15 @@ A basketball statistics tracking system consisting of two main services:
 
 ## Prerequisites
 
-- Java 24
+- Java 21
 - Gradle 8.6+ (via wrapper)
+
+## Development Setup
+
+1. Configure Git line endings for Windows:
+```bash
+git config --global core.autocrlf true
+```
 
 ## Project Structure
 
