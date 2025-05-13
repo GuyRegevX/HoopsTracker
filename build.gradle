@@ -29,12 +29,32 @@ subprojects {
     }
 
     dependencies {
+        // Spring Boot
         implementation 'org.springframework.boot:spring-boot-starter-web'
         implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
         
+        // Database - JDBC
+        implementation 'org.postgresql:postgresql:42.7.2'
+        implementation 'com.zaxxer:HikariCP:5.1.0'
+        
+        // Redis
+        implementation 'redis.clients:jedis:5.1.0'
+
+        // Test containers
+        testImplementation 'org.testcontainers:postgresql:1.19.6'
+        testImplementation 'org.testcontainers:junit-jupiter:1.19.6'
+        testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
         // Annotation processors
         annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
-        testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    }
+
+    bootJar {
+        enabled = true
+    }
+
+    jar {
+        enabled = false
     }
 
     tasks.withType(JavaCompile) {

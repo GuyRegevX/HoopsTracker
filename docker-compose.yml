@@ -1,0 +1,116 @@
+services:
+  # TimescaleDB (TimeseriesDB)
+  timescaledb:
+    image: timescale/timescaledb:latest-pg15
+    environment:
+      POSTGRES_DB: hoopsdb
+      POSTGRES_USER: hoops
+      POSTGRES_PASSWORD: hoopspass
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+      TIMESCALEDB_TELEMETRY: "off"
+    ports:
+      - "5433:5432"
+    volumes:
+      - timescale_data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d
+    networks:
+      - hoops-network
+    command: ["postgres", "-c", "password_encryption=scram-sha-256"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hoops -d hoopsdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Replace pgAdmin with pgweb
+  pgweb:
+    image: sosedoff/pgweb:0.15.0
+    ports:
+      - "8084:8081"
+    environment:
+      DATABASE_URL: postgres://hoops:hoopspass@timescaledb:5432/hoopsdb?sslmode=disable
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+    networks:
+      - hoops-network
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hoops-network
+
+  # Redis Commander
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    ports:
+      - "8083:8081"
+    depends_on:
+      - redis
+    networks:
+      - hoops-network
+
+  # Hoops API Service
+  hoops-api:
+    build:
+      context: .
+      dockerfile: hoops-api/Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_URL: jdbc:postgresql://timescaledb:5432/hoopsdb
+      DB_USER: hoops
+      DB_PASSWORD: hoopspass
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "8080:8080"
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+     - hoops-network   
+
+  # Hoops Ingest Service
+  hoops-ingest:
+    build:
+      context: .
+      dockerfile: hoops-ingest/Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_URL: jdbc:postgresql://timescaledb:5432/hoopsdb
+      DB_USER: hoops
+      DB_PASSWORD: hoopspass
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "8082:8082"
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - hoops-network
+
+networks:
+  hoops-network:
+    driver: bridge
+
+volumes:
+  timescale_data:
+  redis_data: 

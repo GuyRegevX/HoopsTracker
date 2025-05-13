@@ -7,6 +7,7 @@ A basketball statistics tracking system consisting of two main services:
 ## Prerequisites
 
 - Java 21
+- Docker Desktop
 - Gradle 8.6+ (via wrapper)
 
 ## Development Setup
@@ -55,6 +56,7 @@ gradlew.bat tasks
 
 # Run Ingest service (port 8081)
 ./gradlew :hoops-ingest:bootRun
+
 ```
 
 ## API Documentation
@@ -67,3 +69,48 @@ gradlew.bat tasks
 - Java 24 features enabled including preview features
 - Spring Boot 3.2.3
 - OpenAPI documentation via SpringDoc
+
+## Access Points & Clients
+
+### Main Services
+- Hoops API: http://localhost:8080
+  - Swagger UI: http://localhost:8080/swagger-ui.html
+- Hoops Ingest: http://localhost:8082
+  - Swagger UI: http://localhost:8082/swagger-ui.html
+
+### Database Clients
+- TimescaleDB (pgweb):
+  - URL: http://localhost:8084
+  - Connection Details:
+    - Host: localhost
+    - Port: 5433
+    - Database: hoopsdb
+    - Username: hoops
+    - Password: hoopspass
+    - Connection string: postgres://hoops:hoopspass@localhost:5433/hoopsdb
+
+- Redis Commander:
+  - URL: http://localhost:8083
+  - Connection Details:
+    - Host: localhost
+    - Port: 6379
+    - No authentication required
+
+### Direct Database Connections
+- TimescaleDB:
+  - Host: localhost
+  - Port: 5433
+  - Database: hoopsdb
+  - Username: hoops
+  - Password: hoopspass
+  - JDBC URL: jdbc:postgresql://localhost:5433/hoopsdb
+
+- Redis:
+  - Host: localhost
+  - Port: 6379
+
+## Quick Access
+1. TimescaleDB Management: [pgweb](http://localhost:8084)
+2. Redis Management: [Redis Commander](http://localhost:8083)
+3. API Documentation: [Swagger UI - API](http://localhost:8080/swagger-ui.html)
+4. Ingest Documentation: [Swagger UI - Ingest](http://localhost:8082/swagger-ui.html)
