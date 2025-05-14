@@ -1,6 +1,7 @@
 rootProject.name = 'hoops-tracker'
 
 // Define the subprojects
+include 'hoops-common'
 include 'hoops-api'
 include 'hoops-ingest'
 

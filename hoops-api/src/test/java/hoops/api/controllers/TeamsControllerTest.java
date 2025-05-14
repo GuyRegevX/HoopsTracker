@@ -1,8 +1,8 @@
 package hoops.api.controllers;
 
-import hoops.api.models.dtos.TeamMetaDTO;
-import hoops.api.models.dtos.TeamStatsDTO;
-import hoops.api.services.TeamsService;
+import hoops.api.models.dtos.teams.TeamMetaDTO;
+import hoops.api.models.dtos.teams.TeamStatsDTO;
+import hoops.api.services.teams.TeamsService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,8 +37,8 @@ class TeamsControllerTest {
 
     private TeamMetaDTO testTeamMetaDTO;
     private TeamStatsDTO testTeamStatsDTO;
-    private static final String TEST_TEAM_ID = "00000000-0000-0000-0000-000000000201";
-    private static final String TEST_SEASON_ID = "00000000-0000-0000-0000-000000000101";
+    private static final String TEST_TEAM_ID = "1";
+    private static final String TEST_SEASON_ID = "1";
 
     @BeforeEach
     void setUp() {
@@ -46,7 +46,7 @@ class TeamsControllerTest {
         testTeamMetaDTO = new TeamMetaDTO();
         testTeamMetaDTO.setTeamId(TEST_TEAM_ID);
         testTeamMetaDTO.setName("Los Angeles Lakers");
-        testTeamMetaDTO.setLeagueId("00000000-0000-0000-0000-000000000001");
+        testTeamMetaDTO.setLeagueId("1");
         testTeamMetaDTO.setLeagueName("NBA");
         testTeamMetaDTO.setCountry("USA");
         testTeamMetaDTO.setLastUpdated(OffsetDateTime.now());
@@ -55,13 +55,13 @@ class TeamsControllerTest {
         testTeamStatsDTO = new TeamStatsDTO();
         testTeamStatsDTO.setTeamId(TEST_TEAM_ID);
         testTeamStatsDTO.setGames(2);  // Total of 2 games (1 completed + 1 live)
-        testTeamStatsDTO.setPpg(125.0);  // Average of (118 + 132) / 2
-        testTeamStatsDTO.setApg(30.0);   // Average of (27 + 33) / 2
-        testTeamStatsDTO.setRpg(50.0);   // Average of (46 + 54) / 2
-        testTeamStatsDTO.setSpg(10.0);   // Average of (9 + 11) / 2
-        testTeamStatsDTO.setBpg(8.0);    // Average of (6 + 10) / 2
-        testTeamStatsDTO.setTopg(11.0);  // Average of (12 + 10) / 2
-        testTeamStatsDTO.setMpg(245.0);  // Average of (243 + 247) / 2
+        testTeamStatsDTO.setPpg(27.5);  // Average of (30 + 25) / 2
+        testTeamStatsDTO.setApg(9.0);   // Average of (10 + 8) / 2
+        testTeamStatsDTO.setRpg(7.0);   // Average of (8 + 6) / 2
+        testTeamStatsDTO.setSpg(1.5);   // Average of (2 + 1) / 2
+        testTeamStatsDTO.setBpg(1.5);   // Average of (1 + 2) / 2
+        testTeamStatsDTO.setTopg(2.5);  // Average of (3 + 2) / 2
+        testTeamStatsDTO.setMpg(31.5);  // Average of (35 + 28) / 2
     }
 
     @Test
@@ -94,13 +94,13 @@ class TeamsControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.teamId").value(TEST_TEAM_ID))
                 .andExpect(jsonPath("$.games").value(2))
-                .andExpect(jsonPath("$.ppg").value(125.0))
-                .andExpect(jsonPath("$.apg").value(30.0))
-                .andExpect(jsonPath("$.rpg").value(50.0))
-                .andExpect(jsonPath("$.spg").value(10.0))
-                .andExpect(jsonPath("$.bpg").value(8.0))
-                .andExpect(jsonPath("$.topg").value(11.0))
-                .andExpect(jsonPath("$.mpg").value(245.0));
+                .andExpect(jsonPath("$.ppg").value(27.5))
+                .andExpect(jsonPath("$.apg").value(9.0))
+                .andExpect(jsonPath("$.rpg").value(7.0))
+                .andExpect(jsonPath("$.spg").value(1.5))
+                .andExpect(jsonPath("$.bpg").value(1.5))
+                .andExpect(jsonPath("$.topg").value(2.5))
+                .andExpect(jsonPath("$.mpg").value(31.5));
     }
 
     @Test

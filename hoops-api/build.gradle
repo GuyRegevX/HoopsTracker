@@ -11,6 +11,9 @@ springBoot {
 }
 
 dependencies {
+    // Project dependencies
+ //   implementation project(':hoops-common')
+    
     // Spring dependencies
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'

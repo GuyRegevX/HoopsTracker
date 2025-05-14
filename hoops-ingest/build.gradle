@@ -11,6 +11,9 @@ springBoot {
 }
 
 dependencies {
+    // Project dependencies
+    implementation project(':hoops-common')
+    
     // Redis client
     implementation 'redis.clients:jedis:5.1.0'
     

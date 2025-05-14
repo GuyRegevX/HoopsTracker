@@ -38,15 +38,15 @@ subprojects {
         mavenCentral()
     }
 
+    tasks.withType(JavaCompile) {
+        options.compilerArgs << '-parameters'
+    }
+
     dependencies {
         implementation 'org.springframework.boot:spring-boot-starter-web'
         implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
         implementation 'org.postgresql:postgresql'
         testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    }
-
-    compileJava {
-        options.compilerArgs << '-parameters'
     }
 
     dependencies {
@@ -72,11 +72,20 @@ project(':hoops-ingest') {
     }
 }
 
+project(':hoops-common') {
+    bootJar {
+        enabled = false
+    }
+    jar {
+        enabled = true
+    }
+}
+
 // Root project should not produce a jar
 tasks.named('jar') {
     enabled = false
 }
 
 wrapper {
-    gradleVersion = '8.5'
+    gradleVersion = '8.6'
 } 

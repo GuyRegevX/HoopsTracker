@@ -143,6 +143,52 @@ gradlew.bat tasks
 3. API Documentation: [Swagger UI - API](http://localhost:8080/swagger-ui.html)
 4. Ingest Documentation: [Swagger UI - Ingest](http://localhost:8082/swagger-ui.html)
 
+## Data Models
+
+### Team Data Models
+
+#### TeamMetaDTO
+- `teamId`: String - Unique identifier for the team
+- `name`: String - Team name
+- `leagueId`: String - Associated league identifier
+- `leagueName`: String - Name of the league
+- `country`: String - Team's country
+- `lastUpdated`: OffsetDateTime - Last update timestamp
+
+#### TeamStatsDTO
+- `teamId`: String - Team identifier
+- `games`: Integer - Number of games played
+- `ppg`: Double - Points per game
+- `apg`: Double - Assists per game
+- `rpg`: Double - Rebounds per game
+- `spg`: Double - Steals per game
+- `bpg`: Double - Blocks per game
+- `topg`: Double - Turnovers per game
+- `mpg`: Double - Minutes per game
+
+### Player Data Models
+
+#### PlayerMetaDTO
+- `playerId`: String - Unique identifier for the player
+- `name`: String - Player's name
+- `teamId`: String - Associated team identifier
+- `teamName`: String - Name of the team
+- `jerseyNumber`: Integer - Player's jersey number
+- `position`: String - Player's position
+- `active`: Boolean - Player's active status
+- `lastUpdated`: OffsetDateTime - Last update timestamp
+
+#### PlayerStatsDTO
+- `playerId`: String - Player identifier
+- `games`: Integer - Number of games played
+- `ppg`: Double - Points per game
+- `apg`: Double - Assists per game
+- `rpg`: Double - Rebounds per game
+- `spg`: Double - Steals per game
+- `bpg`: Double - Blocks per game
+- `topg`: Double - Turnovers per game
+- `mpg`: Double - Minutes per game
+
 ## Troubleshooting
 
 ### Database Connection Issues

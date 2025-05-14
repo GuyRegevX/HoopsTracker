@@ -1,10 +1,10 @@
 package hoops.api.mappers;
 
-import hoops.api.models.dtos.TeamDTO;
-import hoops.api.models.dtos.TeamMetaDTO;
-import hoops.api.models.dtos.TeamStatsDTO;
-import hoops.api.models.entities.Team;
-import hoops.api.models.entities.TeamStats;
+import hoops.api.models.dtos.teams.TeamDTO;
+import hoops.api.models.dtos.teams.TeamMetaDTO;
+import hoops.api.models.dtos.teams.TeamStatsDTO;
+import hoops.api.models.entities.teams.Team;
+import hoops.api.models.entities.teams.TeamStats;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 import java.time.OffsetDateTime;
@@ -29,17 +29,19 @@ class TeamMapperTest {
         team.setFoundedYear(1947);
         team.setLastUpdated(OffsetDateTime.now());
         
-        team.setGames(82);
-        team.setPpg(114.5);
-        team.setApg(25.8);
-        team.setRpg(44.2);
-        team.setSpg(7.5);
-        team.setBpg(5.2);
-        team.setTopg(13.1);
-        team.setMpg(240.0);
+        TeamStats stats = new TeamStats();
+        stats.setTeamId("team123");
+        stats.setGames(82);
+        stats.setPpg(114.5);
+        stats.setApg(25.8);
+        stats.setRpg(44.2);
+        stats.setSpg(7.5);
+        stats.setBpg(5.2);
+        stats.setTopg(13.1);
+        stats.setMpg(240.0);
 
         // When
-        TeamDTO dto = mapper.toDTO(team);
+        TeamDTO dto = mapper.toTeamDTO(team, stats);
 
         // Then
         assertThat(dto).isNotNull();
@@ -55,14 +57,14 @@ class TeamMapperTest {
         assertThat(dto.getFoundedYear()).isEqualTo(team.getFoundedYear());
         assertThat(dto.getLastUpdated()).isEqualTo(team.getLastUpdated());
         
-        assertThat(dto.getGames()).isEqualTo(team.getGames());
-        assertThat(dto.getPpg()).isEqualTo(team.getPpg());
-        assertThat(dto.getApg()).isEqualTo(team.getApg());
-        assertThat(dto.getRpg()).isEqualTo(team.getRpg());
-        assertThat(dto.getSpg()).isEqualTo(team.getSpg());
-        assertThat(dto.getBpg()).isEqualTo(team.getBpg());
-        assertThat(dto.getTopg()).isEqualTo(team.getTopg());
-        assertThat(dto.getMpg()).isEqualTo(team.getMpg());
+        assertThat(dto.getGames()).isEqualTo(stats.getGames());
+        assertThat(dto.getPpg()).isEqualTo(stats.getPpg());
+        assertThat(dto.getApg()).isEqualTo(stats.getApg());
+        assertThat(dto.getRpg()).isEqualTo(stats.getRpg());
+        assertThat(dto.getSpg()).isEqualTo(stats.getSpg());
+        assertThat(dto.getBpg()).isEqualTo(stats.getBpg());
+        assertThat(dto.getTopg()).isEqualTo(stats.getTopg());
+        assertThat(dto.getMpg()).isEqualTo(stats.getMpg());
     }
 
     @Test
