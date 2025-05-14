@@ -5,11 +5,23 @@ plugins {
 }
 
 allprojects {
-    group = 'hoops'
-    version = '0.0.1-SNAPSHOT'
-
     repositories {
         mavenCentral()
+        maven {
+            url "https://repo1.maven.org/maven2/"
+            content {
+                includeGroup "org.springframework"
+            }
+        }
+        jcenter()
+        google()
+    }
+    
+    configurations.all {
+        resolutionStrategy {
+            cacheChangingModulesFor 0, 'seconds'
+            cacheDynamicVersionsFor 0, 'seconds'
+        }
     }
 }
 
@@ -18,51 +30,53 @@ subprojects {
     apply plugin: 'org.springframework.boot'
     apply plugin: 'io.spring.dependency-management'
 
-    java {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
-    }
+    group = 'hoops'
+    version = '0.0.1-SNAPSHOT'
+    sourceCompatibility = '17'
 
-    clean {
-        delete "${buildDir}"
-        delete "${projectDir}/.gradle"
+    repositories {
+        mavenCentral()
     }
 
     dependencies {
-        // Spring Boot
         implementation 'org.springframework.boot:spring-boot-starter-web'
-        implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
-        
-        // Database - JDBC
-        implementation 'org.postgresql:postgresql:42.7.2'
-        implementation 'com.zaxxer:HikariCP:5.1.0'
-        
-        // Redis
-        implementation 'redis.clients:jedis:5.1.0'
-
-        // Test containers
-        testImplementation 'org.testcontainers:postgresql:1.19.6'
-        testImplementation 'org.testcontainers:junit-jupiter:1.19.6'
+        implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+        implementation 'org.postgresql:postgresql'
         testImplementation 'org.springframework.boot:spring-boot-starter-test'
-
-        // Annotation processors
-        annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
     }
 
-    bootJar {
-        enabled = true
+    compileJava {
+        options.compilerArgs << '-parameters'
     }
 
-    jar {
-        enabled = false
-    }
-
-    tasks.withType(JavaCompile) {
-        options.compilerArgs += '--enable-preview'
-        options.release = 21
+    dependencies {
+        testImplementation 'org.junit.jupiter:junit-jupiter'
+        testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     }
 
     tasks.named('test') {
         useJUnitPlatform()
     }
+}
+
+// Configure specific settings for each subproject
+project(':hoops-api') {
+    springBoot {
+        mainClass = 'hoops.api.HoopsApiApplication'
+    }
+}
+
+project(':hoops-ingest') {
+    springBoot {
+        mainClass = 'hoops.ingestion.HoopsIngestApplication'
+    }
+}
+
+// Root project should not produce a jar
+tasks.named('jar') {
+    enabled = false
+}
+
+wrapper {
+    gradleVersion = '8.5'
 } 

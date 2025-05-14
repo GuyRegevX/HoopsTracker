@@ -24,7 +24,20 @@ public class DatabaseConfig {
         config.setJdbcUrl(dbUrl);
         config.setUsername(dbUsername);
         config.setPassword(dbPassword);
+        config.setDriverClassName("org.postgresql.Driver");
+        
+        // Connection pool settings
         config.setMaximumPoolSize(10);
+        config.setMinimumIdle(5);
+        config.setIdleTimeout(300000); // 5 minutes
+        config.setConnectionTimeout(20000); // 20 seconds
+        config.setMaxLifetime(600000); // 10 minutes
+        
+        // TimescaleDB specific settings
+        config.addDataSourceProperty("reWriteBatchedInserts", "true");
+        config.addDataSourceProperty("applicationName", "HoopsIngestion");
+        config.addDataSourceProperty("tcpKeepAlive", "true");
+        
         return new HikariDataSource(config);
     }
 } 

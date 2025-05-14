@@ -6,7 +6,6 @@ services:
       POSTGRES_DB: hoopsdb
       POSTGRES_USER: hoops
       POSTGRES_PASSWORD: hoopspass
-      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
       TIMESCALEDB_TELEMETRY: "off"
     ports:
       - "5433:5432"
@@ -15,7 +14,7 @@ services:
       - ./db/init:/docker-entrypoint-initdb.d
     networks:
       - hoops-network
-    command: ["postgres", "-c", "password_encryption=scram-sha-256"]
+    command: ["postgres", "-c", "shared_preload_libraries=timescaledb"]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U hoops -d hoopsdb"]
       interval: 10s
@@ -39,7 +38,7 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - "6380:6379"
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
