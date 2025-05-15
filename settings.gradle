@@ -1,5 +1,6 @@
-rootProject.name = 'HoopsTracker'
+rootProject.name = 'hoops-tracker'
 
 include 'hoops-api'
 include 'hoops-ingest'
-include 'hoops-common' 
+include 'hoops-common'
+include 'hoops-processor' 

@@ -28,6 +28,48 @@ docker-compose up -d
 - Database UI (pgweb): http://localhost:8084
 - Redis Commander: http://localhost:8083
 
+## Design & Implementation
+
+### WebSocket Test Client
+
+The system includes a built-in test client (`/src/main/resources/static/index.html`) that provides:
+- Real-time WebSocket connection testing
+- Event sending functionality
+- Connection status monitoring
+- Event logging display
+
+#### Event Format
+```json
+{
+  "gameId": "1001",           // Keep under 10 chars for Redis
+  "teamId": "BOS",
+  "playerId": "jt0",
+  "playerName": "Jayson Tatum",
+  "event": "points",          // See supported events below
+  "value": 3,
+  "timestamp": "2024-03-10T21:00:15.321Z"
+}
+```
+
+#### Supported Events
+
+| Event Type      | Value Type | Valid Range    |
+|----------------|------------|----------------|
+| points         | integer    | 1-3           |
+| rebounds       | integer    | ≥ 1           |
+| assists        | integer    | ≥ 1           |
+| steals         | integer    | ≥ 1           |
+| blocks         | integer    | ≥ 1           |
+| fouls          | integer    | 0-6           |
+| minutes_played | float      | 0-48          |
+
+#### Validation Rules
+- All fields are required
+- GameID must be a string under 10 characters
+- Values must be within specified ranges
+- Timestamps must be in ISO-8601 format and not in future
+- Event types must match the supported list
+
 ## Testing Guide
 
 ### 1. Start Required Services
@@ -40,32 +82,15 @@ docker-compose up -d
 ./gradlew :hoops-ingest:bootRun
 ```
 
-### 2. Access the WebSocket Test Client
+### 2. Testing Steps
 
 1. Open `http://localhost:8082/` in your browser
-2. Click the "Connect" button to establish WebSocket connection
-3. Use the test buttons to send events
+2. Click "Connect" to establish WebSocket connection
+3. Use test buttons to send events:
+   - "Send Points Event" - Valid 3-point score
+   - "Send Invalid Event" - Invalid 4-point score
 
-### 3. Send Test Events
-
-The client provides two test buttons:
-- "Send Points Event" - Sends a valid 3-point score
-- "Send Invalid Event" - Sends an invalid 4-point score (for testing validation)
-
-Example of a valid event:
-```json
-{
-  "gameId": "1001",           // Keep under 10 chars for Redis
-  "teamId": "BOS",
-  "playerId": "jt0",
-  "playerName": "Jayson Tatum",
-  "event": "points",
-  "value": 3,
-  "timestamp": "2024-03-10T21:00:15.321Z"
-}
-```
-
-### 4. Monitor Results
+### 3. Monitor Results
 
 1. Watch the test client's log window for:
    - Connection status
@@ -76,27 +101,7 @@ Example of a valid event:
    - Stream entries in 'game-events-stream'
    - Event processing status
 
-### 5. Supported Events
-
-| Event Type      | Value Type | Valid Range    |
-|----------------|------------|----------------|
-| points         | integer    | 1-3           |
-| rebounds       | integer    | ≥ 1           |
-| assists        | integer    | ≥ 1           |
-| steals         | integer    | ≥ 1           |
-| blocks         | integer    | ≥ 1           |
-| fouls          | integer    | 0-6           |
-| minutes_played | float      | 0-48          |
-
-### 6. Validation Rules
-
-- All fields are required
-- GameID must be a string under 10 characters
-- Values must be within specified ranges
-- Timestamps must be in ISO-8601 format and not in future
-- Event types must match the supported list
-
-### 7. Troubleshooting
+### 4. Troubleshooting
 
 1. Connection Issues:
    - Ensure the page is accessed via `http://localhost:8082/`
@@ -206,3 +211,46 @@ git config --global core.autocrlf true
 3. Commit your changes
 4. Push to the branch
 5. Create a new Pull Request
+
+## Services
+
+- **hoops-api** (port 8080): REST API for basketball data
+- **hoops-ingest** (port 8082): WebSocket service for real-time event ingestion
+- **hoops-processor** (port 8084): Event processing and enrichment service
+
+## Development Tools
+
+- **pgweb** (port 9080): Web-based PostgreSQL database viewer
+- **redis-commander** (port 9081): Web-based Redis database management
+- **TimescaleDB** (port 5433): Time-series database for statistics
+- **Redis** (port 6379): In-memory database for caching and streams
+
+## Getting Started
+
+1. Start the services:
+   ```bash
+   docker-compose up
+   ```
+
+2. Access the tools:
+   - Database UI: http://localhost:9080
+   - Redis UI: http://localhost:9081
+   - API Docs: http://localhost:8080/swagger-ui.html
+   - WebSocket Test UI: http://localhost:8082
+
+## Development Guidelines
+
+1. Code Structure:
+   - Follow existing package naming conventions
+   - Use common library for shared code
+   - Implement proper error handling and logging
+
+2. Data Storage:
+   - Use Redis for caching (24-hour TTL)
+   - TimescaleDB for persistent storage
+   - Follow existing schema conventions
+
+3. Testing:
+   - Write unit tests for new functionality
+   - Use test containers for integration tests
+   - Follow existing test naming conventions

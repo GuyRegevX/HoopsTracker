@@ -4,27 +4,25 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
 import java.time.Instant;
 
 /**
- * Base class for all basketball game events.
- * Uses JSON type information to deserialize specific event types based on the "event" field.
- * Each event type (points, rebounds, etc.) extends this class with specific validation rules.
+ * Base class for all game events
  */
 @JsonTypeInfo(
     use = JsonTypeInfo.Id.NAME,
-    property = "event",
-    visible = true
+    include = JsonTypeInfo.As.PROPERTY,
+    property = "type"
 )
 @JsonSubTypes({
-    @JsonSubTypes.Type(value = PointsEvent.class, name = "points"),
-    @JsonSubTypes.Type(value = ReboundsEvent.class, name = "rebounds"),
-    @JsonSubTypes.Type(value = AssistsEvent.class, name = "assists"),
-    @JsonSubTypes.Type(value = StealsEvent.class, name = "steals"),
-    @JsonSubTypes.Type(value = BlocksEvent.class, name = "blocks"),
-    @JsonSubTypes.Type(value = FoulsEvent.class, name = "fouls"),
+    @JsonSubTypes.Type(value = PointsScoredEvent.class, name = "points_scored"),
+    @JsonSubTypes.Type(value = ReboundEvent.class, name = "rebound"),
+    @JsonSubTypes.Type(value = AssistEvent.class, name = "assist"),
+    @JsonSubTypes.Type(value = BlockEvent.class, name = "block"),
+    @JsonSubTypes.Type(value = StealEvent.class, name = "steal"),
+    @JsonSubTypes.Type(value = TurnoverEvent.class, name = "turnover"),
+    @JsonSubTypes.Type(value = FoulEvent.class, name = "foul"),
     @JsonSubTypes.Type(value = MinutesPlayedEvent.class, name = "minutes_played")
 })
 public abstract class GameEvent<T extends Number> {
@@ -51,36 +49,23 @@ public abstract class GameEvent<T extends Number> {
     private String playerId;
     
     /**
-     * Player's full name
+     * Player's name for display purposes
      */
-    @NotBlank(message = "Player name is required")
-    @JsonProperty(value = "playerName", required = true)
+    @JsonProperty("playerName")
     private String playerName;
     
     /**
-     * Type of event (points, rebounds, etc.)
-     * This field is used for JSON deserialization to determine the concrete event type
+     * When the event occurred in the game
      */
-    @NotBlank(message = "Event type is required")
-    @JsonProperty(value = "event", required = true)
-    private String event;
+    @PastOrPresent(message = "Event time must be in the past or present")
+    @JsonProperty("eventTime")
+    private Instant eventTime;
     
     /**
-     * Event value (points scored, number of rebounds, etc.)
-     * Specific validation rules are defined in concrete event classes
+     * The value associated with this event (points scored, rebounds, etc.)
      */
-    @NotNull(message = "Value is required")
     @JsonProperty(value = "value", required = true)
     protected T value;
-    
-    /**
-     * Event timestamp in ISO-8601 format
-     * Must not be in the future
-     */
-    @NotNull(message = "Timestamp is required")
-    @PastOrPresent(message = "Timestamp must not be in the future")
-    @JsonProperty(value = "timestamp", required = true)
-    private Instant timestamp;
     
     // Standard getters and setters
     public String getGameId() { return gameId; }
@@ -95,12 +80,9 @@ public abstract class GameEvent<T extends Number> {
     public String getPlayerName() { return playerName; }
     public void setPlayerName(String playerName) { this.playerName = playerName; }
     
-    public String getEvent() { return event; }
-    public void setEvent(String event) { this.event = event; }
+    public Instant getEventTime() { return eventTime; }
+    public void setEventTime(Instant eventTime) { this.eventTime = eventTime; }
     
     public T getValue() { return value; }
     public void setValue(T value) { this.value = value; }
-    
-    public Instant getTimestamp() { return timestamp; }
-    public void setTimestamp(Instant timestamp) { this.timestamp = timestamp; }
 } 
