@@ -1,3 +1,5 @@
+
+
 services:
   # TimescaleDB (TimeseriesDB)
   timescaledb:
@@ -36,16 +38,15 @@ services:
 
   # Redis
   redis:
-    image: redis:7-alpine
+    image: redis:latest
     ports:
-      - "6380:6379"
+      - "6379:6379"
     volumes:
       - redis_data:/data
-    command: redis-server --appendonly yes
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
+      interval: 5s
+      timeout: 3s
       retries: 5
     networks:
       - hoops-network
@@ -91,16 +92,11 @@ services:
       dockerfile: hoops-ingest/Dockerfile
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      DB_URL: jdbc:postgresql://timescaledb:5432/hoopsdb
-      DB_USER: hoops
-      DB_PASSWORD: hoopspass
       REDIS_HOST: redis
       REDIS_PORT: 6379
     ports:
       - "8082:8082"
     depends_on:
-      timescaledb:
-        condition: service_healthy
       redis:
         condition: service_healthy
     networks:

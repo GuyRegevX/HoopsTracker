@@ -1,4 +1,51 @@
-// Service specific dependencies can go here
+plugins {
+    id 'org.springframework.boot' version '3.2.3'
+    id 'io.spring.dependency-management' version '1.1.4'
+    id 'java'
+}
+
+group = 'hoops'
+version = '0.0.1-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+
+dependencies {
+    // Spring Boot
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    
+    // Redis
+    implementation 'redis.clients:jedis:5.1.0'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    
+    // JSON
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+    
+    // Logging
+    implementation 'ch.qos.logback:logback-classic'
+    
+    // Common module
+    implementation project(':hoops-common')
+    
+    // Test dependencies
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.mockito:mockito-core'
+    testImplementation 'org.mockito:mockito-junit-jupiter'
+    testImplementation 'org.testcontainers:testcontainers:1.19.6'
+    testImplementation 'org.testcontainers:junit-jupiter:1.19.6'
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers:3.2.3'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-data-redis'
+}
+
+test {
+    useJUnitPlatform()
+}
 
 // Configure Java compiler to preserve parameter names
 compileJava {
@@ -8,26 +55,4 @@ compileJava {
 // Configure main class
 springBoot {
     mainClass = 'hoops.ingestion.HoopsIngestApplication'
-}
-
-dependencies {
-    // Project dependencies
-    implementation project(':hoops-common')
-    
-    // Redis client
-    implementation 'redis.clients:jedis:5.1.0'
-    
-    // Database dependencies
-    implementation 'org.postgresql:postgresql:42.7.2'
-    implementation 'com.zaxxer:HikariCP:5.1.0'
-    
-    // Spring Boot starters
-    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    
-    // Test dependencies
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.testcontainers:testcontainers:1.19.6'
-    testImplementation 'org.testcontainers:postgresql:1.19.6'
-    testImplementation 'org.testcontainers:junit-jupiter:1.19.6'
 } 

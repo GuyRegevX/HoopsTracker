@@ -31,9 +31,9 @@ class PlayersRepositoryImplIntegrationTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    private static final String KNOWN_PLAYER_ID = "00000000-0000-0000-0000-000000000501";
-    private static final String KNOWN_SEASON_ID = "00000000-0000-0000-0000-000000000101";
-    private static final String KNOWN_TEAM_ID = "00000000-0000-0000-0000-000000000201";
+    private static final String KNOWN_PLAYER_ID = "1";
+    private static final String KNOWN_SEASON_ID = "1";
+    private static final String KNOWN_TEAM_ID = "1";
     private static final String KNOWN_PLAYER_NAME = "LeBron James";
     private static final String KNOWN_TEAM_NAME = "Los Angeles Lakers";
 
@@ -69,7 +69,7 @@ class PlayersRepositoryImplIntegrationTest {
         
 
         boolean playerExists = jdbcTemplate.queryForObject(
-            "SELECT EXISTS(SELECT 1 FROM players WHERE player_id = ?::uuid)",
+            "SELECT EXISTS(SELECT 1 FROM players WHERE player_id = ?)",
             Boolean.class, KNOWN_PLAYER_ID);
         assertTrue(playerExists, "Test player should exist in database");
 
@@ -78,8 +78,8 @@ class PlayersRepositoryImplIntegrationTest {
             SELECT COUNT(DISTINCT g.game_id) 
             FROM games g
             JOIN player_stat_events pse ON pse.game_id = g.game_id 
-            WHERE pse.player_id = ?::uuid 
-            AND g.season_id = ?::uuid
+            WHERE pse.player_id = ?::integer 
+            AND g.season_id = ?::integer
             AND g.state = 'COMPLETED'
             """,
             Integer.class, KNOWN_PLAYER_ID, KNOWN_SEASON_ID);
@@ -89,8 +89,8 @@ class PlayersRepositoryImplIntegrationTest {
             SELECT COUNT(DISTINCT g.game_id) 
             FROM games g
             JOIN player_stat_events pse ON pse.game_id = g.game_id 
-            WHERE pse.player_id = ?::uuid 
-            AND g.season_id = ?::uuid
+            WHERE pse.player_id = ?::integer 
+            AND g.season_id = ?::integer
             AND g.state = 'IN_PROGRESS'
             """,
             Integer.class, KNOWN_PLAYER_ID, KNOWN_SEASON_ID);

@@ -53,7 +53,8 @@ public class PlayersRepositoryImpl implements PlayersRepository {
                 spg, bpg, topg, mpg, games_played as games,
                 last_updated
             FROM player_combined_stats
-            WHERE player_id = ?::uuid AND season_id = ?::uuid
+            WHERE player_id = ?
+            AND season_id = ?
             """;
         
         try {

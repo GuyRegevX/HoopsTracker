@@ -32,7 +32,7 @@ subprojects {
 
     group = 'hoops'
     version = '0.0.1-SNAPSHOT'
-    sourceCompatibility = '17'
+    sourceCompatibility = '21'
 
     repositories {
         mavenCentral()
@@ -46,6 +46,11 @@ subprojects {
         implementation 'org.springframework.boot:spring-boot-starter-web'
         implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
         implementation 'org.postgresql:postgresql'
+        
+        // Add SpringDoc OpenAPI (Swagger) dependencies
+        implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
+        implementation 'org.springdoc:springdoc-openapi-starter-common:2.3.0'
+        
         testImplementation 'org.springframework.boot:spring-boot-starter-test'
     }
 
@@ -59,7 +64,6 @@ subprojects {
     }
 }
 
-// Configure specific settings for each subproject
 project(':hoops-api') {
     springBoot {
         mainClass = 'hoops.api.HoopsApiApplication'

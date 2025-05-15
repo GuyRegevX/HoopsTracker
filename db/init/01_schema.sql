@@ -3,14 +3,14 @@ CREATE EXTENSION IF NOT EXISTS timescaledb;
 
 -- Create base tables
 CREATE TABLE leagues (
-    league_id SERIAL PRIMARY KEY,
+    league_id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     country TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE seasons (
-    season_id SERIAL PRIMARY KEY,
+    season_id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
@@ -33,7 +33,7 @@ CREATE TABLE teams (
 );
 
 CREATE TABLE players (
-    player_id SERIAL PRIMARY KEY,
+    player_id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     team_id SERIAL REFERENCES teams(team_id),
     jersey_number TEXT,
@@ -58,7 +58,7 @@ CREATE TABLE games (
 -- Create player_stat_events table
 CREATE TABLE player_stat_events (
     event_id SERIAL,
-    player_id SERIAL NOT NULL,
+    player_id TEXT NOT NULL,
     game_id SERIAL NOT NULL,
     team_id SERIAL NOT NULL,
     stat_type TEXT NOT NULL,

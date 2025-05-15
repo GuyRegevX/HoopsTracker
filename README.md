@@ -1,8 +1,13 @@
-# Hoops Tracker
+# HoopsTracker
 
-A basketball statistics tracking system consisting of two main services:
-- Hoops API: REST API for accessing basketball data
-- Hoops Ingest: Service for ingesting and processing basketball data
+A real-time basketball statistics tracking system with WebSocket-based event ingestion and Redis Streams processing.
+
+## System Overview
+
+- **Hoops API**: REST API for accessing basketball data
+- **Hoops Ingest**: WebSocket service for real-time game event ingestion
+- **Data Processing**: Redis Streams for real-time event processing
+- **Storage**: TimescaleDB for historical data
 
 ## Prerequisites
 
@@ -10,33 +15,103 @@ A basketball statistics tracking system consisting of two main services:
 - Docker Desktop
 - Gradle 8.6+ (via wrapper)
 
-## Docker Setup
+## Quick Start
 
-### Docker Requirements
-- Docker Desktop must be installed and running
-  - Windows/Mac: Install [Docker Desktop](https://www.docker.com/products/docker-desktop)
-  - Linux: Install Docker Engine and Docker Compose
-- Minimum Docker requirements:
-  - Docker Engine: 20.10.0 or higher
-  - Docker Compose: v2.0.0 or higher
-
-### Running with Docker
+1. Start all services:
 ```bash
-# Start all services
 docker-compose up -d
-
-# Stop all services
-docker-compose down
-
-# View logs
-docker-compose logs -f
 ```
 
-The following services will be available:
-- Hoops API: http://localhost:8080
-- Hoops Ingest: http://localhost:8082
+2. Access points:
+- WebSocket Test Interface: http://localhost:8082/
+- API Service: http://localhost:8080
 - Database UI (pgweb): http://localhost:8084
 - Redis Commander: http://localhost:8083
+
+## Testing Guide
+
+### 1. Start Required Services
+
+```bash
+# Start Redis and other dependencies
+docker-compose up -d
+
+# Start the Ingest service
+./gradlew :hoops-ingest:bootRun
+```
+
+### 2. Access the WebSocket Test Client
+
+1. Open `http://localhost:8082/` in your browser
+2. Click the "Connect" button to establish WebSocket connection
+3. Use the test buttons to send events
+
+### 3. Send Test Events
+
+The client provides two test buttons:
+- "Send Points Event" - Sends a valid 3-point score
+- "Send Invalid Event" - Sends an invalid 4-point score (for testing validation)
+
+Example of a valid event:
+```json
+{
+  "gameId": "1001",           // Keep under 10 chars for Redis
+  "teamId": "BOS",
+  "playerId": "jt0",
+  "playerName": "Jayson Tatum",
+  "event": "points",
+  "value": 3,
+  "timestamp": "2024-03-10T21:00:15.321Z"
+}
+```
+
+### 4. Monitor Results
+
+1. Watch the test client's log window for:
+   - Connection status
+   - Event sending confirmation
+   - Error messages
+
+2. Check Redis Commander (http://localhost:8083) to view:
+   - Stream entries in 'game-events-stream'
+   - Event processing status
+
+### 5. Supported Events
+
+| Event Type      | Value Type | Valid Range    |
+|----------------|------------|----------------|
+| points         | integer    | 1-3           |
+| rebounds       | integer    | ≥ 1           |
+| assists        | integer    | ≥ 1           |
+| steals         | integer    | ≥ 1           |
+| blocks         | integer    | ≥ 1           |
+| fouls          | integer    | 0-6           |
+| minutes_played | float      | 0-48          |
+
+### 6. Validation Rules
+
+- All fields are required
+- GameID must be a string under 10 characters
+- Values must be within specified ranges
+- Timestamps must be in ISO-8601 format and not in future
+- Event types must match the supported list
+
+### 7. Troubleshooting
+
+1. Connection Issues:
+   - Ensure the page is accessed via `http://localhost:8082/`
+   - Check that the Ingest service is running
+   - Verify Redis is running (`docker-compose ps`)
+
+2. Event Processing Issues:
+   - Check the gameId length (keep under 10 chars)
+   - Verify event type and value range
+   - Check application logs for validation errors
+
+3. Redis Issues:
+   - Open Redis Commander to verify stream contents
+   - Check Redis connection in application logs
+   - Restart Redis if needed: `docker-compose restart redis`
 
 ## Development Setup
 
@@ -45,87 +120,25 @@ The following services will be available:
 git config --global core.autocrlf true
 ```
 
-## Project Structure
-
-# To build the project
-gradlew.bat build
-
-# To run the API service
-gradlew.bat :hoops-api:bootRun
-
-# To run the Ingest service
-gradlew.bat :hoops-ingest:bootRun
-
-# To clean the build
-gradlew.bat clean
-
-# To see all available tasks
-gradlew.bat tasks
-
-## Building
-
+2. Build the project:
 ```bash
-# Clean build directories
-./gradlew clean
-
-# Build all projects
 ./gradlew build
-
-# Build specific project
-./gradlew :hoops-api:build
-./gradlew :hoops-ingest:build
 ```
 
-## Running
-
+3. Run services:
 ```bash
-# Run API service (port 8080)
+# Run API service
 ./gradlew :hoops-api:bootRun
 
-# Run Ingest service (port 8081)
+# Run Ingest service
 ./gradlew :hoops-ingest:bootRun
-
 ```
 
-## API Documentation
+## Database Access
 
-- API Service Swagger UI: http://localhost:8080/swagger-ui.html
-- Ingest Service Swagger UI: http://localhost:8081/swagger-ui.html
-
-## Development
-
-- Java 24 features enabled including preview features
-- Spring Boot 3.2.3
-- OpenAPI documentation via SpringDoc
-
-## Access Points & Clients
-
-### Main Services
-- Hoops API: http://localhost:8080
-  - Swagger UI: http://localhost:8080/swagger-ui.html
-- Hoops Ingest: http://localhost:8082
-  - Swagger UI: http://localhost:8082/swagger-ui.html
-
-### Database Clients
-- TimescaleDB (pgweb):
-  - URL: http://localhost:8084
-  - Connection Details:
-    - Host: localhost
-    - Port: 5433
-    - Database: hoopsdb
-    - Username: hoops
-    - Password: hoopspass
-    - Connection string: postgres://hoops:hoopspass@localhost:5433/hoopsdb
-
-- Redis Commander:
-  - URL: http://localhost:8083
-  - Connection Details:
-    - Host: localhost
-    - Port: 6379
-    - No authentication required
-
-### Direct Database Connections
-- TimescaleDB:
+### TimescaleDB
+- URL: http://localhost:8084 (pgweb)
+- Connection Details:
   - Host: localhost
   - Port: 5433
   - Database: hoopsdb
@@ -133,15 +146,12 @@ gradlew.bat tasks
   - Password: hoopspass
   - JDBC URL: jdbc:postgresql://localhost:5433/hoopsdb
 
-- Redis:
+### Redis
+- Commander UI: http://localhost:8083
+- Connection Details:
   - Host: localhost
   - Port: 6379
-
-## Quick Access
-1. TimescaleDB Management: [pgweb](http://localhost:8084)
-2. Redis Management: [Redis Commander](http://localhost:8083)
-3. API Documentation: [Swagger UI - API](http://localhost:8080/swagger-ui.html)
-4. Ingest Documentation: [Swagger UI - Ingest](http://localhost:8082/swagger-ui.html)
+  - No authentication required
 
 ## Data Models
 
@@ -189,113 +199,10 @@ gradlew.bat tasks
 - `topg`: Double - Turnovers per game
 - `mpg`: Double - Minutes per game
 
-## Troubleshooting
+## Contributing
 
-### Database Connection Issues
-
-1. First, make sure all Docker containers are running:
-```bash
-docker-compose ps
-```
-
-2. If services are not running, start them:
-```bash
-docker-compose up -d
-```
-
-3. Check if TimescaleDB is ready:
-```bash
-docker-compose logs timescaledb
-```
-
-4. To view the database through pgweb:
-   - Open http://localhost:8084 in your browser
-   - The connection should be automatic
-   - If not, use these connection details:
-     - Host: timescaledb (NOT localhost)
-     - Port: 5432 (NOT 5433)
-     - Database: hoopsdb
-     - Username: hoops
-     - Password: hoopspass
-
-5. If still having issues:
-   - Try restarting the services:
-     ```bash
-     docker-compose down
-     docker-compose up -d
-     ```
-   - Wait about 30 seconds for TimescaleDB to fully initialize
-   - Then try accessing pgweb again at http://localhost:8084
-
-Note: When using Docker, use 'timescaledb' as the host name instead of 'localhost' when connecting from within the Docker network.
-
-6. DB Map
-
-+----------------+       +----------------+
-|    leagues     |<------|     teams      |
-|  league_id PK  |       |  team_id PK    |
-|  name          |       |  name          |
-|  country       |       |  league_id FK  |
-|  created_at    |       |  country       |
-+----------------+       |  city          |
-                        |  division      |
-                        |  conference    |
-                        |  arena         |
-                        |  founded_year  |
-                        |  created_at    |
-                        |  last_updated  |
-                        +----------------+
-                               ^
-                               |
-                               |
-                        +----------------+
-                        |    players     |
-                        |  player_id PK  |
-                        |  name          |
-                        |  team_id FK    |
-                        |  jersey_number |
-                        |  position      |
-                        |  active        |
-                        |  created_at    |
-                        +----------------+
-                               ^
-                               |
-                               |
-                        +----------------+       +----------------+
-                        |     games      |<------|    seasons     |
-                        |  game_id PK    |       |  season_id PK  |
-                        |  game_date     |       |  name          |
-                        |  season_id FK  |       |  start_date    |
-                        |  league_id FK  |       |  end_date      |
-                        |  home_team_id FK|       |  active        |
-                        |  away_team_id FK|       |  created_at    |
-                        |  start_time    |       +----------------+
-                        |  created_at    |
-                        |  state         |
-                        +----------------+
-                               ^
-                               |
-                               |
-                        +----------------+
-                        | player_stat_events |
-                        |  event_id, timestamp PK |
-                        |  player_id FK   |
-                        |  game_id FK     |
-                        |  team_id FK     |
-                        |  stat_type      |
-                        |  stat_value     |
-                        |  game_state     |
-                        |  created_at     |
-                        +----------------+
-                               ^
-                               |
-                               |
-                        +----------------+
-                        |   team_stats    |
-                        |  team_id, season_id, time PK |
-                        |  games          |
-                        |  ppg, apg, rpg  |
-                        |  spg, bpg, topg |
-                        |  mpg            |
-                        |  created_at     |
-                        +----------------+
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a new Pull Request

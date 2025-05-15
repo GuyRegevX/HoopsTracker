@@ -21,7 +21,7 @@ CREATE TABLE seasons (
 CREATE TABLE teams (
     team_id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
-    league_id SERIAL REFERENCES leagues(league_id),
+    league_id TEXT REFERENCES leagues(league_id),
     country TEXT NOT NULL,
     city TEXT,
     division TEXT,
@@ -35,20 +35,20 @@ CREATE TABLE teams (
 CREATE TABLE players (
     player_id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
-    team_id SERIAL REFERENCES teams(team_id),
-    jersey_number TEXT,
+    team_id TEXT REFERENCES teams(team_id),
+    jersey_number INTEGER,
     position TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     last_updated TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE games (
-    game_id SERIAL PRIMARY KEY,
+    game_id TEXT PRIMARY KEY,
     game_date DATE NOT NULL,
     season_id SERIAL REFERENCES seasons(season_id),
-    league_id SERIAL REFERENCES leagues(league_id),
-    home_team_id SERIAL REFERENCES teams(team_id),
-    away_team_id SERIAL REFERENCES teams(team_id),
+    league_id TEXT REFERENCES leagues(league_id),
+    home_team_id TEXT REFERENCES teams(team_id),
+    away_team_id TEXT REFERENCES teams(team_id),
     start_time TIME NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     last_updated TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -58,9 +58,9 @@ CREATE TABLE games (
 -- Create player_stat_events table
 CREATE TABLE player_stat_events (
     event_id SERIAL,
-    player_id SERIAL NOT NULL,
-    game_id SERIAL NOT NULL,
-    team_id SERIAL NOT NULL,
+    player_id TEXT NOT NULL,
+    game_id TEXT NOT NULL,
+    team_id TEXT NOT NULL,
     stat_type TEXT NOT NULL,
     stat_value INTEGER NOT NULL,
     version INTEGER NOT NULL DEFAULT 1,
@@ -124,8 +124,8 @@ WHERE game_state = 'IN_PROGRESS';
 
 -- Create team_stats table
 CREATE TABLE team_stats (
-    team_id SERIAL NOT NULL,
-    season_id SERIAL NOT NULL,
+    team_id TEXT NOT NULL,
+    season_id TEXT NOT NULL,
     time TIMESTAMPTZ NOT NULL,
     games INTEGER NOT NULL DEFAULT 0,
     ppg DOUBLE PRECISION NOT NULL DEFAULT 0,
@@ -390,7 +390,7 @@ WITH combined_stats AS (
         psa.avg_minutes_per_game * psa.games_played as total_minutes,
         psa.games_played,
         p.last_updated,
-        NULL::INTEGER as game_id
+        NULL::TEXT as game_id
     FROM player_session_avg psa
     JOIN players p ON p.player_id = psa.player_id
     

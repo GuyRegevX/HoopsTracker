@@ -41,4 +41,10 @@ public final class RedisConstants {
         public static final int TTL = 3600;        // 1 hour
         public static final int STATS_TTL = 300;   // 5 minutes
     }
+
+    // TTL values in seconds
+    public static final long TEAM_TTL = 86400;        // 24 hours
+    public static final long PLAYER_TTL = 86400;      // 24 hours
+    public static final long TEAM_STATS_TTL = 3600;   // 1 hour
+    public static final long PLAYER_STATS_TTL = 3600; // 1 hour
 } 

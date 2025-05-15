@@ -51,11 +51,11 @@ public class TeamsRepositoryImpl implements TeamsRepository {
     @Override
     public TeamStats getTeamStats(String teamId, String seasonId) {
         String sql = """
-            SELECT player_id, season_id, ppg, apg, rpg,
+            SELECT team_id, season_id, ppg, apg, rpg,
                    spg, bpg, topg, mpg, games_played as games,
                    last_updated
-            FROM player_combined_stats
-            WHERE player_id = ?::uuid AND season_id = ?::uuid
+            FROM team_combined_stats
+            WHERE team_id = ?::uuid AND season_id = ?::uuid
             """;
         
         try (Connection conn = dataSource.getConnection();
