@@ -1,7 +1,7 @@
 package hoops.ingestion.controllers;
 
-import hoops.ingestion.models.events.GameEvent;
-import hoops.ingestion.services.GameEventService;
+import hoops.common.models.events.GameEvent;
+import hoops.ingestion.services.producers.GameEventProducer;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,20 +21,20 @@ import java.util.Map;
 public class GameDataController {
     private static final Logger logger = LoggerFactory.getLogger(GameDataController.class);
     
-    private final GameEventService gameEventService;
+    private final GameEventProducer gameEventProducer;
     
     @Autowired
-    public GameDataController(GameEventService gameEventService) {
-        this.gameEventService = gameEventService;
+    public GameDataController(GameEventProducer gameEventProducer) {
+        this.gameEventProducer = gameEventProducer;
     }
     
     @PostMapping("/event")
     public ResponseEntity<?> ingestGameEvent(@Valid @RequestBody GameEvent gameEvent) {
-        logger.info("Received game event for game ID: {}, player: {}, event: {}", 
-            gameEvent.getGameId(), gameEvent.getPlayerName(), gameEvent.getEvent());
+        logger.info("Received game event for event version: {}, player: {}, event: {}",
+            gameEvent.getGameId(), gameEvent.getVersion(), gameEvent.getEvent());
         
         try {
-            gameEventService.processGameEvent(gameEvent);
+            gameEventProducer.publishEvent(gameEvent);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             logger.error("Error processing game event", e);

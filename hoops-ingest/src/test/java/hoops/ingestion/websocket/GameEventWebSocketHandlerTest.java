@@ -1,8 +1,9 @@
 package hoops.ingestion.websocket;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import hoops.ingestion.models.events.PointsEvent;
-import hoops.ingestion.services.GameEventService;
+import hoops.common.models.events.MinutesPlayedEvent;
+import hoops.common.models.events.PointsEvent;
+import hoops.ingestion.services.producers.GameEventProducer;
 import hoops.ingestion.config.JacksonConfig;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -13,7 +14,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -27,7 +27,7 @@ import static org.mockito.Mockito.*;
 class GameEventWebSocketHandlerTest {
     
     @Mock
-    private GameEventService gameEventService;
+    private GameEventProducer gameEventProducer;
     
     @Mock
     private WebSocketSession webSocketSession;
@@ -40,7 +40,7 @@ class GameEventWebSocketHandlerTest {
     @BeforeEach
     void setUp() {
         Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
-        handler = new GameEventWebSocketHandler(objectMapper, gameEventService, validator);
+        handler = new GameEventWebSocketHandler(objectMapper, gameEventProducer, validator);
     }
     
     @Test
@@ -51,23 +51,22 @@ class GameEventWebSocketHandlerTest {
                 "gameId": "2024030100",
                 "teamId": "BOS",
                 "playerId": "jt0",
-                "playerName": "Jayson Tatum",
-                "event": "points",
+                "event": "point",
                 "value": 3,
-                "timestamp": "%s"
+                "version": 1
             }
             """.formatted(Instant.now().toString());
         
         TextMessage message = new TextMessage(json);
         
         // Configure mock behavior for a valid event
-        doNothing().when(gameEventService).processGameEvent(any(PointsEvent.class));
+        doNothing().when(gameEventProducer).publishEvent(any(PointsEvent.class));
         
         // Handle the message
         handler.handleTextMessage(webSocketSession, message);
         
         // Verify that the service was called once
-        verify(gameEventService, times(1)).processGameEvent(any(PointsEvent.class));
+        verify(gameEventProducer, times(1)).publishEvent(any(PointsEvent.class));
     }
     
     @Test
@@ -78,9 +77,9 @@ class GameEventWebSocketHandlerTest {
                 "gameId": "2024030100",
                 "teamId": "BOS",
                 "playerName": "Jayson Tatum",
-                "event": "points",
-                "value": 3,
-                "timestamp": "%s"
+                "event": "point",
+                "value": 4
+                "version": 1
             }
             """.formatted(Instant.now().toString());
         
@@ -90,7 +89,7 @@ class GameEventWebSocketHandlerTest {
         handler.handleTextMessage(webSocketSession, message);
         
         // Verify that the service was not called
-        verify(gameEventService, never()).processGameEvent(any());
+        verify(gameEventProducer, never()).publishEvent(any());
     }
     
     @Test
@@ -103,7 +102,7 @@ class GameEventWebSocketHandlerTest {
         handler.handleTextMessage(webSocketSession, message);
         
         // Verify that the service was not called
-        verify(gameEventService, never()).processGameEvent(any());
+        verify(gameEventProducer, never()).publishEvent(any());
     }
     
     @Test
@@ -127,7 +126,7 @@ class GameEventWebSocketHandlerTest {
         handler.handleTextMessage(webSocketSession, message);
         
         // Verify that the service was not called
-        verify(gameEventService, never()).processGameEvent(any());
+        verify(gameEventProducer, never()).publishEvent(any());
     }
     
     @Test
@@ -139,8 +138,9 @@ class GameEventWebSocketHandlerTest {
                 "teamId": "BOS",
                 "playerId": "jt0",
                 "playerName": "Jayson Tatum",
-                "event": "points",
+                "event": "point",
                 "value": 4,
+                "version: 3,
                 "timestamp": "%s"
             }
             """.formatted(Instant.now().toString());
@@ -151,6 +151,51 @@ class GameEventWebSocketHandlerTest {
         handler.handleTextMessage(webSocketSession, message);
         
         // Verify that the service was not called
-        verify(gameEventService, never()).processGameEvent(any());
+        verify(gameEventProducer, never()).publishEvent(any());
+    }
+
+    @Test
+    void testMinutesPlayedMessageProcessing() throws Exception {
+        String json = """
+        {
+            "gameId": "2024030100",
+            "teamId": "BOS",
+            "playerId": "jt0",
+            "event": "minutes_played",
+            "value": 0.3,
+            "version": 1
+        }
+        """;
+
+        TextMessage message = new TextMessage(json);
+
+        // Handle the message
+        handler.handleTextMessage(webSocketSession, message);
+
+        // Verify that the service was called once
+        verify(gameEventProducer, times(1)).publishEvent(any(MinutesPlayedEvent.class));
+    }
+
+    @Test
+    void testInvalidMinutesPlayedValueProcessing() throws Exception {
+        // Test with invalid minutes (over 48 minutes)
+        String json = """
+        {
+            "gameId": "2024030100",
+            "teamId": "BOS",
+            "playerId": "jt0",
+            "event": "minutes_played",
+            "value": 48.1,
+            "version": 1
+        }
+        """;
+
+        TextMessage message = new TextMessage(json);
+
+        // Handle the message
+        handler.handleTextMessage(webSocketSession, message);
+
+        // Verify that the service was not called due to invalid value
+        verify(gameEventProducer, never()).publishEvent(any());
     }
 } 

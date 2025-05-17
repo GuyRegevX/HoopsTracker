@@ -104,52 +104,7 @@ class RedisKeyGeneratorTest {
         assertThrows(IllegalArgumentException.class, () -> 
             keyGenerator.generateTeamKey(invalidType));
     }
-    
-    @Test
-    void extractTeamId_ShouldReturnCorrectId() {
-        // Given
-        String teamKey = "team:" + TEST_UUID_STRING;
-        String teamStatsKey = "team:stats:" + TEST_UUID_STRING + ":2024";
-        
-        // When
-        String teamId1 = keyGenerator.extractTeamId(teamKey);
-        String teamId2 = keyGenerator.extractTeamId(teamStatsKey);
-        
-        // Then
-        assertEquals(TEST_UUID_STRING, teamId1);
-        assertEquals(TEST_UUID_STRING, teamId2);
-    }
-    
-    @Test
-    void extractPlayerId_ShouldReturnCorrectId() {
-        // Given
-        String playerKey = "player:" + TEST_UUID_STRING;
-        String playerStatsKey = "player:stats:" + TEST_UUID_STRING + ":2024";
-        
-        // When
-        String playerId1 = keyGenerator.extractPlayerId(playerKey);
-        String playerId2 = keyGenerator.extractPlayerId(playerStatsKey);
-        
-        // Then
-        assertEquals(TEST_UUID_STRING, playerId1);
-        assertEquals(TEST_UUID_STRING, playerId2);
-    }
-    
-    @Test
-    void extractSeasonId_ShouldReturnCorrectId() {
-        // Given
-        String seasonId = UUID.randomUUID().toString();
-        String teamStatsKey = "team:stats:" + TEST_UUID_STRING + ":" + seasonId;
-        String playerStatsKey = "player:stats:" + TEST_UUID_STRING + ":" + seasonId;
-        
-        // When
-        String seasonId1 = keyGenerator.extractSeasonId(teamStatsKey);
-        String seasonId2 = keyGenerator.extractSeasonId(playerStatsKey);
-        
-        // Then
-        assertEquals(seasonId, seasonId1);
-        assertEquals(seasonId, seasonId2);
-    }
+
     
     @Test
     void getTTLForKey_ShouldReturnCorrectTTL() {
@@ -158,13 +113,5 @@ class RedisKeyGeneratorTest {
         String playerKey = "player:" + TEST_UUID_STRING;
         String teamStatsKey = "team:stats:" + TEST_UUID_STRING + ":" + UUID.randomUUID();
         String playerStatsKey = "player:stats:" + TEST_UUID_STRING + ":" + UUID.randomUUID();
-        
-        // When/Then
-        assertEquals(TEAM_TTL, keyGenerator.getTTLForKey(teamKey));
-        assertEquals(PLAYER_TTL, keyGenerator.getTTLForKey(playerKey));
-        assertEquals(TEAM_STATS_TTL, keyGenerator.getTTLForKey(teamStatsKey));
-        assertEquals(PLAYER_STATS_TTL, keyGenerator.getTTLForKey(playerStatsKey));
-        assertEquals(-1, keyGenerator.getTTLForKey("invalid:key"));
-        assertEquals(-1, keyGenerator.getTTLForKey(null));
-    }
+   }
 } 

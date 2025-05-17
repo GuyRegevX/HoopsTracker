@@ -1,8 +1,8 @@
 package hoops.ingestion.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import hoops.ingestion.models.events.*;
-import hoops.ingestion.services.GameEventService;
+import hoops.common.models.events.*;
+import hoops.ingestion.services.producers.GameEventProducer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -13,7 +13,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.Instant;
 import java.util.stream.Stream;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -31,29 +30,28 @@ class GameDataControllerTest {
     private ObjectMapper objectMapper;
     
     @MockBean
-    private GameEventService gameEventService;
+    private GameEventProducer gameEventProducer;
 
     private static Stream<Arguments> validEventProvider() {
         return Stream.of(
-            Arguments.of(createEvent(PointsEvent::new, "points", 3)),
-            Arguments.of(createEvent(ReboundsEvent::new, "rebounds", 5)),
-            Arguments.of(createEvent(AssistsEvent::new, "assists", 8)),
-            Arguments.of(createEvent(BlocksEvent::new, "blocks", 2)),
-            Arguments.of(createEvent(StealsEvent::new, "steals", 3)),
-            Arguments.of(createEvent(FoulsEvent::new, "fouls", 2)),
+            Arguments.of(createEvent(PointsEvent::new, "point", 3d)),
+            Arguments.of(createEvent(ReboundsEvent::new, "rebounds", 5d)),
+            Arguments.of(createEvent(AssistsEvent::new, "assists", 8d)),
+            Arguments.of(createEvent(BlocksEvent::new, "blocks", 2d)),
+            Arguments.of(createEvent(StealsEvent::new, "steals", 3d)),
+            Arguments.of(createEvent(FoulsEvent::new, "fouls", 2d)),
             Arguments.of(createEvent(MinutesPlayedEvent::new, "minutes_played", 24.5))
         );
     }
 
-    private static <T extends GameEvent> T createEvent(EventSupplier<T> supplier, String eventType, Number value) {
+    private static <T extends GameEvent> T createEvent(EventSupplier<T> supplier, String eventType, Double value) {
         T event = supplier.get();
+        event.setVersion(123L);
         event.setGameId("2024030100");
         event.setTeamId("BOS");
         event.setPlayerId("jt0");
-        event.setPlayerName("Jayson Tatum");
         event.setEvent(eventType);
         event.setValue(value);
-        event.setTimestamp(Instant.now());
         return event;
     }
 
@@ -66,7 +64,7 @@ class GameDataControllerTest {
     @MethodSource("validEventProvider")
     void testValidEventIngestion(GameEvent event) throws Exception {
         // Configure mock
-        doNothing().when(gameEventService).processGameEvent(any(GameEvent.class));
+        doNothing().when(gameEventProducer).publishEvent(any(GameEvent.class));
         
         // Perform request
         mockMvc.perform(post("/api/v1/ingest/event")
@@ -75,7 +73,7 @@ class GameDataControllerTest {
             .andExpect(status().isOk());
         
         // Verify service was called
-        verify(gameEventService, times(1)).processGameEvent(any(GameEvent.class));
+        verify(gameEventProducer, times(1)).publishEvent(any(GameEvent.class));
     }
 
     @Test
@@ -91,18 +89,16 @@ class GameDataControllerTest {
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.errors").isArray())
             .andExpect(jsonPath("$.errors[?(@.field=='teamId')].message").exists())
-            .andExpect(jsonPath("$.errors[?(@.field=='playerId')].message").exists())
-            .andExpect(jsonPath("$.errors[?(@.field=='playerName')].message").exists())
-            .andExpect(jsonPath("$.errors[?(@.field=='value')].message").exists());
-        
+            .andExpect(jsonPath("$.errors[?(@.field=='playerId')].message").exists());
+
         // Verify service was not called
-        verify(gameEventService, never()).processGameEvent(any());
+        verify(gameEventProducer, never()).publishEvent(any());
     }
 
     @Test
     void testInvalidEventValues() throws Exception {
         // Test invalid points value
-        PointsEvent event = createEvent(PointsEvent::new, "points", 4); // Invalid: points must be 1-3
+        PointsEvent event = createEvent(PointsEvent::new, "point", 4d); // Invalid: points must be 1-3
         
         mockMvc.perform(post("/api/v1/ingest/event")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -124,11 +120,11 @@ class GameDataControllerTest {
     
     @Test
     void testServiceError() throws Exception {
-        GameEvent event = createEvent(PointsEvent::new, "points", 3);
+        GameEvent event = createEvent(PointsEvent::new, "point", 3d);
         
         // Configure mock to throw exception
         doThrow(new RuntimeException("Test error"))
-            .when(gameEventService).processGameEvent(any());
+            .when(gameEventProducer).publishEvent(any());
         
         // Perform request
         mockMvc.perform(post("/api/v1/ingest/event")

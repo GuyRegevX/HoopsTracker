@@ -56,19 +56,21 @@ CREATE TABLE games (
 );
 
 -- Create player_stat_events table
+
 CREATE TABLE player_stat_events (
-    event_id SERIAL,
+    event_id TEXT NOT NULL,
     player_id TEXT NOT NULL,
-    game_id SERIAL NOT NULL,
-    team_id SERIAL NOT NULL,
+    game_id TEXT NOT NULL,
+    team_id TEXT NOT NULL,
+    season_id TEXT NOT NULL,
     stat_type TEXT NOT NULL,
-    stat_value INTEGER NOT NULL,
+    stat_value NUMERIC NOT NULL,
     version INTEGER NOT NULL DEFAULT 1,
-    game_state TEXT NOT NULL DEFAULT 'IN_PROGRESS',
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (event_id, version, created_at),
+    PRIMARY KEY (event_id, created_at),
     FOREIGN KEY (player_id) REFERENCES players(player_id),
     FOREIGN KEY (game_id) REFERENCES games(game_id),
+    FOREIGN KEY (team_id) REFERENCES games(game_id),
     CONSTRAINT valid_stat_type CHECK (LOWER(stat_type) IN ('point', 'assist', 'rebound', 'steal', 'block', 'foul', 'turnover', 'minutes_played'))
 );
 

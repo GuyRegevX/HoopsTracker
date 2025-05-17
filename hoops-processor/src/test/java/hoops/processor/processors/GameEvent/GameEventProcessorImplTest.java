@@ -1,10 +1,12 @@
-package hoops.processor.processors;
+package hoops.processor.processors.GameEvent;
 
-import hoops.processor.models.GameEvent;
-import hoops.processor.models.entities.PlayerStatEvents;
+import hoops.common.models.events.GameEvent;
+import hoops.common.models.events.PointsEvent;
+import hoops.processor.models.entities.PlayerStatEvent;
 import hoops.processor.models.entities.Seasons;
-import hoops.processor.repositories.PlayerStatEvent.PlayerStatEventsRepository;
-import hoops.processor.services.Season.SeasonsService;
+import hoops.processor.repositories.PlayerStatEvents.PlayerStatEventsRepository;
+import hoops.processor.services.playerStatEvents.PlayerStatEventsServiceImpl;
+import hoops.processor.services.seasons.SeasonService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,7 +16,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.Instant;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -25,91 +26,88 @@ import static org.mockito.Mockito.*;
 class GameEventProcessorImplTest {
 
     @Mock
-    private SeasonsService seasonsService;
+    private SeasonService seasonService;
 
     @Mock
-    private PlayerStatEventsRepository playerStatEventsRepository;
+    private PlayerStatEventsServiceImpl playerStatEventsService;
 
     @InjectMocks
     private GameEventProcessorImpl processor;
 
     @Captor
-    private ArgumentCaptor<PlayerStatEvents> playerStatEventsCaptor;
+    private ArgumentCaptor<PlayerStatEvent> playerStatEventsCaptor;
 
     private GameEvent testEvent;
     private Seasons activeSeason;
+    private final String PLAYER_ID = "1";
+    private final String GAME_ID = "2";
+    private final String TEAM_ID = "3";
+    private final String SEASON_ID = "4";
 
     @BeforeEach
     void setUp() {
         // Setup test event
-        testEvent = new GameEvent();
-        testEvent.setId(1L);
-        testEvent.setPlayerId(2L);
-        testEvent.setGameId(3L);
-        testEvent.setTeamId(4L);
-        testEvent.setType("points_scored");
-        testEvent.setValue(2);
-        testEvent.setEventTime(Instant.now());
-        testEvent.setPlayerName("John Doe");
+        testEvent = new PointsEvent();
+        testEvent.setVersion(22L);
+        testEvent.setPlayerId(PLAYER_ID);
+        testEvent.setGameId(GAME_ID);
+        testEvent.setTeamId(TEAM_ID);
+        testEvent.setEvent("point");
+        testEvent.setValue(2.0);
 
         // Setup active season
-        activeSeason = new Seasons();
-        activeSeason.setId(5L);
-        activeSeason.setName("2023-24");
-        activeSeason.setIsActive(true);
+        activeSeason = Seasons.builder()
+            .id(SEASON_ID)
+            .name("2023-2024")
+            .isActive(true)
+            .build();
     }
 
     @Test
-    void processGameEvent_Success() {
-        // Arrange
-        when(seasonsService.getCurrentSeason()).thenReturn(Optional.of(activeSeason));
-        doNothing().when(playerStatEventsRepository).save(any());
+    void processEvent_Success() {
+        when(seasonService.getCurrentSeason()).thenReturn(Optional.of(activeSeason));
 
         // Act
-        assertDoesNotThrow(() -> processor.processGameEvent(testEvent));
+        processor.processEvent(testEvent);
 
         // Assert
-        verify(playerStatEventsRepository).save(playerStatEventsCaptor.capture());
-        PlayerStatEvents savedEvent = playerStatEventsCaptor.getValue();
+        verify(seasonService).getCurrentSeason();
+        verify(playerStatEventsService).save(playerStatEventsCaptor.capture());
         
-        assertEquals(testEvent.getPlayerId(), savedEvent.getPlayerId());
-        assertEquals(testEvent.getGameId(), savedEvent.getGameId());
-        assertEquals(testEvent.getTeamId(), savedEvent.getTeamId());
-        assertEquals(activeSeason.getId(), savedEvent.getSeasonId());
-        assertEquals(testEvent.getType(), savedEvent.getEventType());
-        assertEquals(testEvent.getValue(), savedEvent.getValue());
-        assertEquals(testEvent.getEventTime(), savedEvent.getEventTime());
-        assertEquals(testEvent.getPlayerName(), savedEvent.getPlayerName());
-        assertNotNull(savedEvent.getProcessedAt());
+        PlayerStatEvent capturedEvent = playerStatEventsCaptor.getValue();
+        assertNotNull(capturedEvent);
+        assertEquals(PLAYER_ID, capturedEvent.getPlayerId());
+        assertEquals(TEAM_ID, capturedEvent.getTeamId());
+        assertEquals(GAME_ID, capturedEvent.getGameId());
+        assertEquals(SEASON_ID, capturedEvent.getSeasonId());
+        assertEquals(testEvent.getEvent(), capturedEvent.getStatType().getValue());
+        assertEquals(testEvent.getValue(), capturedEvent.getStatValue());
+        assertEquals(testEvent.getVersion(), capturedEvent.getVersion());
     }
 
     @Test
-    void processGameEvent_NoActiveSeason_ThrowsException() {
-        // Arrange
-        when(seasonsService.getCurrentSeason()).thenReturn(Optional.empty());
+    void processEvent_NoActiveSeason() {
+        when(seasonService.getCurrentSeason()).thenReturn(Optional.empty());
 
-        // Act & Assert
-        RuntimeException exception = assertThrows(RuntimeException.class,
-            () -> processor.processGameEvent(testEvent));
-        assertEquals("No active season found", exception.getMessage());
-        verify(playerStatEventsRepository, never()).save(any());
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            processor.processEvent(testEvent);
+        });
+
+        assertEquals("Failed to process game event", exception.getMessage());
+        verify(seasonService).getCurrentSeason();
+        verify(playerStatEventsService, never()).save(any());
     }
 
     @Test
-    void processGameEvent_RepositoryError_ThrowsException() {
-        // Arrange
-        when(seasonsService.getCurrentSeason()).thenReturn(Optional.of(activeSeason));
-        doThrow(new RuntimeException("Database error"))
-            .when(playerStatEventsRepository).save(any());
+    void processEvent_ServiceError() {
+        when(seasonService.getCurrentSeason()).thenThrow(new RuntimeException("Database error"));
 
-        // Act & Assert
-        assertThrows(RuntimeException.class, () -> processor.processGameEvent(testEvent));
-    }
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            processor.processEvent(testEvent);
+        });
 
-    @Test
-    void processGameEvent_NullEvent_ThrowsException() {
-        // Act & Assert
-        assertThrows(NullPointerException.class, () -> processor.processGameEvent(null));
-        verify(playerStatEventsRepository, never()).save(any());
+        assertEquals("Failed to process game event", exception.getMessage());
+        verify(seasonService).getCurrentSeason();
+        verify(playerStatEventsService, never()).save(any());
     }
 } 

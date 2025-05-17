@@ -95,6 +95,28 @@ services:
     ports:
       - "8082:8082"
     depends_on:
+      timescaledb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - hoops-network
+
+  # Hoops Ingest Service
+  hoops-processor:
+    build:
+      context: .
+      dockerfile: hoops-processor/Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_URL: jdbc:postgresql://timescaledb:5432/hoopsdb
+      DB_USER: hoops
+      DB_PASSWORD: hoopspass
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "8084:8084"
+    depends_on:
       redis:
         condition: service_healthy
     networks:

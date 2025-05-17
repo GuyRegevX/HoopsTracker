@@ -1,7 +1,5 @@
 package hoops.common.redis;
 
-import static hoops.common.redis.RedisConstants.Player.*;
-import static hoops.common.redis.RedisConstants.Team.*;
 
 /**
  * Utility class for generating Redis keys

@@ -9,6 +9,22 @@ import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.exceptions.JedisException;
 
+package hoops.api.config;
+
+import java.time.Duration;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.resource.ClientResources;
+import io.lettuce.core.resource.DefaultClientResources;
+
 @Configuration
 public class RedisConfig {
     private static final Logger logger = LoggerFactory.getLogger(RedisConfig.class);
@@ -22,41 +38,54 @@ public class RedisConfig {
     @Value("${redis.password:}")
     private String redisPassword;
     
+    @Value("${redis.database:0}")
+    private int database;
+    
     @Value("${redis.timeout:2000}")
     private int timeout;
     
-    @Value("${redis.pool.max-total:50}")
-    private int maxTotal;
-    
-    @Value("${redis.pool.max-idle:10}")
-    private int maxIdle;
-    
-    @Value("${redis.pool.min-idle:5}")
-    private int minIdle;
-    
-    @Value("${redis.pool.max-wait-millis:1000}")
-    private long maxWaitMillis;
+    @Value("${redis.client.thread-pool-size:4}")
+    private int threadPoolSize;
 
-    @Bean
-    public JedisPool jedisPool() {
+    @Bean(destroyMethod = "shutdown")
+    public ClientResources clientResources() {
+        return DefaultClientResources.builder()
+                .ioThreadPoolSize(threadPoolSize)
+                .computationThreadPoolSize(threadPoolSize)
+                .build();
+    }
+
+    @Bean(destroyMethod = "shutdown")
+    public RedisClient redisClient(ClientResources clientResources) {
         try {
-            JedisPoolConfig poolConfig = new JedisPoolConfig();
-            poolConfig.setMaxTotal(maxTotal);
-            poolConfig.setMaxIdle(maxIdle);
-            poolConfig.setMinIdle(minIdle);
-            poolConfig.setMaxWaitMillis(maxWaitMillis);
-            poolConfig.setTestOnBorrow(true);
-            poolConfig.setTestOnReturn(true);
-            poolConfig.setTestWhileIdle(true);
+            RedisURI.Builder uriBuilder = RedisURI.builder()
+                    .withHost(redisHost)
+                    .withPort(redisPort)
+                    .withDatabase(database)
+                    .withTimeout(Duration.ofMillis(timeout));
             
             if (redisPassword != null && !redisPassword.isEmpty()) {
-                return new JedisPool(poolConfig, redisHost, redisPort, timeout, redisPassword);
-            } else {
-                return new JedisPool(poolConfig, redisHost, redisPort, timeout);
+                uriBuilder.withPassword(redisPassword.toCharArray());
             }
+            
+            RedisURI redisURI = uriBuilder.build();
+            
+            ClientOptions options = ClientOptions.builder()
+                    .disconnectedBehavior(ClientOptions.DisconnectedBehavior.REJECT_COMMANDS)
+                    .autoReconnect(true)
+                    .build();
+            
+            RedisClient client = RedisClient.create(clientResources, redisURI);
+            client.setOptions(options);
+            
+            // Test the connection to ensure it's properly configured
+            client.connect().sync().ping();
+            logger.info("Successfully connected to Redis at {}:{}", redisHost, redisPort);
+            
+            return client;
         } catch (Exception e) {
-            logger.error("Failed to create Redis connection pool", e);
-            throw new JedisException("Could not initialize Redis connection pool", e);
+            logger.error("Failed to create Redis client", e);
+            throw new RuntimeException("Could not initialize Redis connection", e);
         }
     }
 } 

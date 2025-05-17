@@ -17,6 +17,7 @@ Real-time basketball statistics ingestion service using WebSocket and Redis Stre
 - Test Client: `http://localhost:8082/`
 
 ### Event Format
+Events
 
 ```json
 {
@@ -24,7 +25,7 @@ Real-time basketball statistics ingestion service using WebSocket and Redis Stre
   "teamId": "BOS",
   "playerId": "jt0",
   "playerName": "Jayson Tatum",
-  "event": "points",
+  "event": "point",
   "value": 3,
   "timestamp": "2024-03-10T21:00:15.321Z"
 }

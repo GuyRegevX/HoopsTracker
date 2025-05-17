@@ -7,13 +7,24 @@ import java.time.OffsetDateTime;
 public class TeamStats {
     private String teamId;
     private String seasonId;
-    private Integer games;
-    private Double ppg;  // points per game
-    private Double apg;  // assists per game
-    private Double rpg;  // rebounds per game
-    private Double spg;  // steals per game
-    private Double bpg;  // blocks per game
-    private Double topg; // turnovers per game
-    private Double mpg;  // minutes per game
+    private String gameId; // For live games
+
+    // Team Metadata
+    private String teamName;
+    private String leagueId;
+    private String leagueName;
+
+    // Stats
+    private int games;
+    private double ppg;
+    private double apg;
+    private double rpg;
+    private double spg;
+    private double bpg;
+    private double topg;
+    private double mpg;
+
+    // Timestamps
+    private OffsetDateTime time;
     private OffsetDateTime lastUpdated;
 } 

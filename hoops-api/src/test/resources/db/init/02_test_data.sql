@@ -19,28 +19,29 @@ INSERT INTO games (game_id, game_date, season_id, league_id, home_team_id, away_
 (1, '2024-01-15', 1, 1, 1, 1, '19:30:00', 'COMPLETED');
 
 -- Insert test player stats for completed game
-INSERT INTO player_stat_events (event_id, player_id, game_id, stat_type, stat_value, version) VALUES
-(1, 1, 1, 'point', 30, 1),
-(2, 1, 1, 'assist', 10, 1),
-(3, 1, 1, 'rebound', 8, 1),
-(4, 1, 1, 'steal', 2, 1),
-(5, 1, 1, 'block', 1, 1),
-(6, 1, 1, 'turnover', 3, 1),
-(7, 1, 1, 'minutes_played', 35, 1);
+INSERT INTO player_stat_events (player_id, game_id, team_id, stat_type, stat_value)
+VALUES
+('1', '1', '1', 'point', 3, '2024-01-01 19:35:00'),
+('2', '1', '1', 'point', 2, '2024-01-01 19:36:00'),
+('3', '1', '2', 'point', 3, '2024-01-01 19:37:00'),
+('4', '1', '2', 'point', 2, '2024-01-01 19:38:00'),
+('1', '2', '1', 'point', 25, '2024-01-15 20:15:00'),
+('2', '2', '1', 'point', 18, '2024-01-15 20:20:00');
 
 -- Insert test game for live stats
 INSERT INTO games (game_id, game_date, season_id, league_id, home_team_id, away_team_id, start_time, state) VALUES
 (2, '2024-01-16', 1, 1, 1, 1, '19:30:00', 'IN_PROGRESS');
 
 -- Insert test player stats for live game
-INSERT INTO player_stat_events (event_id, player_id, game_id, stat_type, stat_value, version) VALUES
-(8, 1, 2, 'point', 25, 1),
-(9, 1, 2, 'assist', 8, 1),
-(10, 1, 2, 'rebound', 6, 1),
-(11, 1, 2, 'steal', 1, 1),
-(12, 1, 2, 'block', 2, 1),
-(13, 1, 2, 'turnover', 2, 1),
-(14, 1, 2, 'minutes_played', 28, 1);
+INSERT INTO player_stat_events (player_id, game_id, team_id, stat_type, stat_value, version) VALUES
+('1', '2', '1', 'point', 25, 1),
+('1', '2', '1', 'assist', 8, 1),
+('1', '2', '1', 'rebound', 6, 1),
+('1', '2', '1', 'steal', 1, 1),
+('1', '2', '1', 'block', 2, 1),
+('1', '2', '1', 'turnover', 2, 1),
+('1', '2', '1', 'minutes_played', 28, 1);
+
 
 -- Refresh materialized views
 REFRESH MATERIALIZED VIEW team_session_avg;

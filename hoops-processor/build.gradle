@@ -1,0 +1,66 @@
+plugins {
+    id 'org.springframework.boot' version '3.2.3'
+    id 'io.spring.dependency-management' version '1.1.4'
+    id 'java'
+}
+
+group = 'hoops'
+version = '0.0.1-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Spring Boot
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+    
+    // Database
+    implementation 'org.postgresql:postgresql:42.7.2'
+    implementation 'com.zaxxer:HikariCP:5.1.0'
+    
+    // Redis
+    implementation 'redis.clients:jedis:5.1.0'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    
+    // JSON
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+    
+    // Logging
+    implementation 'ch.qos.logback:logback-classic'
+    
+    // Common module
+    implementation project(':hoops-common')
+    
+    // Lombok
+    compileOnly 'org.projectlombok:lombok:1.18.30'
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
+    
+    // Test dependencies
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.mockito:mockito-core'
+    testImplementation 'org.mockito:mockito-junit-jupiter'
+    testImplementation 'org.testcontainers:testcontainers:1.19.6'
+    testImplementation 'org.testcontainers:junit-jupiter:1.19.6'
+    testImplementation 'org.testcontainers:postgresql:1.19.6'
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers:3.2.3'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-data-redis'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+// Configure Java compiler to preserve parameter names
+compileJava {
+    options.compilerArgs << '-parameters'
+}
+
+// Configure main class
+springBoot {
+    mainClass = 'hoops.processor.HoopsProcessorApplication'
+} 

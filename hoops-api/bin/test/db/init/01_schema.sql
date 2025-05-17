@@ -3,79 +3,77 @@ CREATE EXTENSION IF NOT EXISTS timescaledb;
 
 -- Create base tables
 CREATE TABLE leagues (
-    league_id UUID PRIMARY KEY,
+    league_id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     country TEXT NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE seasons (
-    season_id UUID PRIMARY KEY,
+    season_id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     active BOOLEAN DEFAULT false,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE teams (
-    team_id UUID PRIMARY KEY,
+    team_id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
-    league_id UUID REFERENCES leagues(league_id),
+    league_id TEXT REFERENCES leagues(league_id),
     country TEXT NOT NULL,
     city TEXT,
     division TEXT,
     conference TEXT,
     arena TEXT,
     founded_year INTEGER,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    last_updated TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_updated TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE players (
-    player_id UUID PRIMARY KEY,
+    player_id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
-    team_id UUID REFERENCES teams(team_id),
-    jersey_number TEXT,
+    team_id TEXT REFERENCES teams(team_id),
+    jersey_number INTEGER,
     position TEXT,
-    active BOOLEAN DEFAULT true,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    last_updated TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_updated TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE games (
-    game_id UUID PRIMARY KEY,
+    game_id TEXT PRIMARY KEY,
     game_date DATE NOT NULL,
-    season_id UUID REFERENCES seasons(season_id),
-    league_id UUID REFERENCES leagues(league_id),
-    home_team_id UUID REFERENCES teams(team_id),
-    away_team_id UUID REFERENCES teams(team_id),
+    season_id SERIAL REFERENCES seasons(season_id),
+    league_id TEXT REFERENCES leagues(league_id),
+    home_team_id TEXT REFERENCES teams(team_id),
+    away_team_id TEXT REFERENCES teams(team_id),
     start_time TIME NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    last_updated TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_updated TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     state TEXT NOT NULL
 );
 
 -- Create player_stat_events table
 CREATE TABLE player_stat_events (
-    event_id UUID,
-    player_id UUID NOT NULL,
-    game_id UUID NOT NULL,
-    team_id UUID,
-    timestamp TIMESTAMPTZ NOT NULL,
+    event_id SERIAL,
+    player_id TEXT NOT NULL,
+    game_id TEXT NOT NULL,
+    team_id TEXT NOT NULL,
     stat_type TEXT NOT NULL,
     stat_value INTEGER NOT NULL,
+    version INTEGER NOT NULL DEFAULT 1,
     game_state TEXT NOT NULL DEFAULT 'IN_PROGRESS',
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (event_id, timestamp),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (event_id, version, created_at),
     FOREIGN KEY (player_id) REFERENCES players(player_id),
     FOREIGN KEY (game_id) REFERENCES games(game_id),
-    FOREIGN KEY (team_id) REFERENCES teams(team_id),
     CONSTRAINT valid_stat_type CHECK (LOWER(stat_type) IN ('point', 'assist', 'rebound', 'steal', 'block', 'foul', 'turnover', 'minutes_played'))
 );
 
--- Convert to hypertable
-SELECT create_hypertable('player_stat_events', 'timestamp');
+-- Convert to hypertable using created_at
+SELECT create_hypertable('player_stat_events', 'created_at');
 
 -- Create function to maintain game state
 CREATE OR REPLACE FUNCTION update_stat_game_state()
@@ -104,25 +102,12 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Create all indexes in one place
--- Basic indexes
+-- Create base indexes
 CREATE INDEX idx_stat_player_game ON player_stat_events (player_id, game_id);
-CREATE INDEX idx_stat_team_game ON player_stat_events (team_id, game_id);
 CREATE INDEX idx_stat_type ON player_stat_events (LOWER(stat_type));
-CREATE INDEX idx_stats_timestamp ON player_stat_events (timestamp, game_id);
+CREATE INDEX idx_stats_timestamp ON player_stat_events (created_at, game_id);
 
--- Game state based indexes for live games
-CREATE INDEX idx_live_player_stats ON player_stat_events (player_id, game_id, stat_type, stat_value) 
-WHERE game_state = 'IN_PROGRESS';
-
--- Game state based indexes for completed games
-CREATE INDEX idx_completed_player_stats ON player_stat_events (player_id, game_id, stat_type, stat_value) 
-WHERE game_state = 'COMPLETED';
-
-CREATE INDEX idx_completed_team_stats ON player_stat_events (team_id, game_id, stat_type, stat_value) 
-WHERE game_state = 'COMPLETED';
-
--- Game lookup indexes
+-- Game state based indexes
 CREATE INDEX idx_game_state ON games (state, game_id);
 CREATE INDEX idx_game_season_state ON games (season_id, state);
 CREATE INDEX idx_game_team ON games (home_team_id, away_team_id);
@@ -133,10 +118,14 @@ CREATE INDEX idx_game_season ON games (game_id, season_id);
 CREATE INDEX idx_team_league ON teams (league_id);
 CREATE INDEX idx_player_team ON players (team_id);
 
+-- Partial indexes for live and completed games
+CREATE INDEX idx_live_game_events ON player_stat_events (game_id, player_id, stat_type)
+WHERE game_state = 'IN_PROGRESS';
+
 -- Create team_stats table
 CREATE TABLE team_stats (
-    team_id UUID NOT NULL,
-    season_id UUID NOT NULL,
+    team_id TEXT NOT NULL,
+    season_id TEXT NOT NULL,
     time TIMESTAMPTZ NOT NULL,
     games INTEGER NOT NULL DEFAULT 0,
     ppg DOUBLE PRECISION NOT NULL DEFAULT 0,
@@ -158,9 +147,6 @@ SELECT create_hypertable('team_stats', 'time');
 CREATE INDEX idx_team_stats_season ON team_stats (team_id, season_id);
 
 -- Document index purposes
-COMMENT ON INDEX idx_live_player_stats IS 'Optimizes live game player stat queries';
-COMMENT ON INDEX idx_completed_player_stats IS 'Optimizes completed game player stat queries';
-COMMENT ON INDEX idx_completed_team_stats IS 'Optimizes completed game team stat queries';
 COMMENT ON INDEX idx_game_team_season IS 'Optimizes team game lookups by season';
 COMMENT ON INDEX idx_team_league IS 'Optimizes team-league relationship queries';
 COMMENT ON INDEX idx_team_stats_season IS 'Optimizes team stats by season lookups';
@@ -194,7 +180,8 @@ SELECT
     AVG(gs.game_fouls) AS avg_fouls_per_game,
     AVG(gs.game_turnovers) AS avg_turnovers_per_game,
     AVG(gs.game_minutes_played) AS avg_minutes_per_game,
-    COUNT(DISTINCT gs.game_id) AS games_played
+    COUNT(DISTINCT gs.game_id) AS games_played,
+    MAX(g.last_updated) AS last_updated
 FROM game_stats gs
 JOIN games g ON gs.game_id = g.game_id
 WHERE g.state = 'COMPLETED'
@@ -391,76 +378,85 @@ CREATE VIEW player_combined_stats AS
 WITH combined_stats AS (
     -- Get completed game stats
     SELECT 
-        player_id,
-        season_id,
-        avg_points_per_game * games_played as total_points,
-        avg_assists_per_game * games_played as total_assists,
-        avg_rebounds_per_game * games_played as total_rebounds,
-        avg_steals_per_game * games_played as total_steals,
-        avg_blocks_per_game * games_played as total_blocks,
-        avg_fouls_per_game * games_played as total_fouls,
-        avg_turnovers_per_game * games_played as total_turnovers,
-        avg_minutes_per_game * games_played as total_minutes,
-        games_played,
-        NULL::uuid as game_id
-    FROM player_session_avg
+        psa.player_id,
+        psa.season_id,
+        psa.avg_points_per_game * psa.games_played as total_points,
+        psa.avg_assists_per_game * psa.games_played as total_assists,
+        psa.avg_rebounds_per_game * psa.games_played as total_rebounds,
+        psa.avg_steals_per_game * psa.games_played as total_steals,
+        psa.avg_blocks_per_game * psa.games_played as total_blocks,
+        psa.avg_fouls_per_game * psa.games_played as total_fouls,
+        psa.avg_turnovers_per_game * psa.games_played as total_turnovers,
+        psa.avg_minutes_per_game * psa.games_played as total_minutes,
+        psa.games_played,
+        p.last_updated,
+        NULL::TEXT as game_id
+    FROM player_session_avg psa
+    JOIN players p ON p.player_id = psa.player_id
     
     UNION ALL
     
     -- Get live game stats
     SELECT 
-        player_id,
-        season_id,
-        avg_points_per_game as total_points,
-        avg_assists_per_game as total_assists,
-        avg_rebounds_per_game as total_rebounds,
-        avg_steals_per_game as total_steals,
-        avg_blocks_per_game as total_blocks,
-        avg_fouls_per_game as total_fouls,
-        avg_turnovers_per_game as total_turnovers,
-        avg_minutes_per_game as total_minutes,
-        games_played,
-        game_id
-    FROM player_live_stats
+        pls.player_id,
+        pls.season_id,
+        pls.avg_points_per_game as total_points,
+        pls.avg_assists_per_game as total_assists,
+        pls.avg_rebounds_per_game as total_rebounds,
+        pls.avg_steals_per_game as total_steals,
+        pls.avg_blocks_per_game as total_blocks,
+        pls.avg_fouls_per_game as total_fouls,
+        pls.avg_turnovers_per_game as total_turnovers,
+        pls.avg_minutes_per_game as total_minutes,
+        pls.games_played,
+        p.last_updated,
+        pls.game_id
+    FROM player_live_stats pls
+    JOIN players p ON p.player_id = pls.player_id
 )
 SELECT 
-    cs.player_id,
-    cs.season_id,
-    cs.game_id,
-    SUM(total_points) / SUM(games_played) as avg_points_per_game,
-    SUM(total_assists) / SUM(games_played) as avg_assists_per_game,
-    SUM(total_rebounds) / SUM(games_played) as avg_rebounds_per_game,
-    SUM(total_steals) / SUM(games_played) as avg_steals_per_game,
-    SUM(total_blocks) / SUM(games_played) as avg_blocks_per_game,
-    SUM(total_fouls) / SUM(games_played) as avg_fouls_per_game,
-    SUM(total_turnovers) / SUM(games_played) as avg_turnovers_per_game,
-    SUM(total_minutes) / SUM(games_played) as avg_minutes_per_game,
+    player_id,
+    season_id,
+    SUM(total_points) / SUM(games_played) as ppg,
+    SUM(total_assists) / SUM(games_played) as apg,
+    SUM(total_rebounds) / SUM(games_played) as rpg,
+    SUM(total_steals) / SUM(games_played) as spg,
+    SUM(total_blocks) / SUM(games_played) as bpg,
+    SUM(total_turnovers) / SUM(games_played) as topg,
+    SUM(total_minutes) / SUM(games_played) as mpg,
     SUM(games_played) as games_played,
-    p.name as player_name,
-    p.team_id,
-    t.name as team_name,
-    t.league_id,
-    l.name as league_name
-FROM combined_stats cs
-JOIN players p ON cs.player_id = p.player_id
-JOIN teams t ON p.team_id = t.team_id
-JOIN leagues l ON t.league_id = l.league_id
-GROUP BY cs.player_id, cs.season_id, cs.game_id, p.name, p.team_id, t.name, t.league_id, l.name;
+    MAX(last_updated) as last_updated
+FROM combined_stats
+GROUP BY player_id, season_id;
 
-CREATE INDEX idx_historical_player_stats ON player_stat_events (player_id, game_id, stat_type, stat_value) 
-WHERE game_state = 'COMPLETED';
+-- Composite indexes for stat queries
+CREATE INDEX idx_player_stats_game ON player_stat_events (player_id, game_id, stat_type);
+CREATE INDEX idx_team_stats_game ON player_stat_events (team_id, game_id, stat_type);
 
--- Create indexes for team queries
-CREATE INDEX idx_team_game_stats ON player_stat_events (team_id, game_id, stat_type, stat_value) 
-WHERE game_state = 'IN_PROGRESS';
+-- Create continuous aggregate for player stats
+CREATE MATERIALIZED VIEW player_stats_cagg
+WITH (timescaledb.continuous) AS
+SELECT 
+    time_bucket('1 hour', created_at) as bucket,
+    player_id,
+    game_id,
+    stat_type,
+    SUM(stat_value) as total_value,
+    COUNT(*) as event_count
+FROM player_stat_events
+GROUP BY bucket, player_id, game_id, stat_type
+WITH NO DATA;
 
--- Create indexes for player queries
-CREATE INDEX idx_player_stats_game ON player_stat_events (player_id, game_id, stat_type, stat_value) 
-WHERE game_state = 'IN_PROGRESS';
-
-CREATE INDEX idx_player_stats_team ON player_stat_events (player_id, team_id, stat_type, stat_value) 
-WHERE game_state = 'IN_PROGRESS';
-
--- Create index for live game events (simplified)
-CREATE INDEX idx_live_game_events ON player_stat_events (game_id, player_id, stat_type)
-WHERE game_state = 'IN_PROGRESS'; 
+-- Create continuous aggregate for team stats
+CREATE MATERIALIZED VIEW team_stats_cagg
+WITH (timescaledb.continuous) AS
+SELECT 
+    time_bucket('1 hour', created_at) as bucket,
+    team_id,
+    game_id,
+    stat_type,
+    SUM(stat_value) as total_value,
+    COUNT(*) as event_count
+FROM player_stat_events
+GROUP BY bucket, team_id, game_id, stat_type
+WITH NO DATA; 

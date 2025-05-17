@@ -45,7 +45,7 @@ The system includes a built-in test client (`/src/main/resources/static/index.ht
   "teamId": "BOS",
   "playerId": "jt0",
   "playerName": "Jayson Tatum",
-  "event": "points",          // See supported events below
+  "event": "point",          // See supported events below
   "value": 3,
   "timestamp": "2024-03-10T21:00:15.321Z"
 }

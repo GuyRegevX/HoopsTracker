@@ -14,7 +14,8 @@ repositories {
 dependencies {
     // Spring Boot
     implementation 'org.springframework.boot:spring-boot-starter'
-    
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
     // Redis
     api 'redis.clients:jedis:5.1.0'
     
@@ -24,8 +25,7 @@ dependencies {
     
     // Testing
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.testcontainers:testcontainers:1.19.6'
-    testImplementation 'org.testcontainers:junit-jupiter:1.19.6'
+
 }
 
 test {

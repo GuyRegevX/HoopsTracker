@@ -42,6 +42,7 @@ subprojects {
         options.compilerArgs << '-parameters'
     }
 
+
     dependencies {
         implementation 'org.springframework.boot:spring-boot-starter-web'
         implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
@@ -52,6 +53,16 @@ subprojects {
         implementation 'org.springdoc:springdoc-openapi-starter-common:2.3.0'
         
         testImplementation 'org.springframework.boot:spring-boot-starter-test'
+        compileOnly 'org.projectlombok:lombok:1.18.30'
+        annotationProcessor 'org.projectlombok:lombok:1.18.30'
+
+        // Testcontainers
+        testImplementation 'org.testcontainers:testcontainers:1.19.6'
+        testImplementation 'org.testcontainers:junit-jupiter:1.19.6'
+
+        // If not already present, also add
+        testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+
     }
 
     dependencies {

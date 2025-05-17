@@ -1,8 +1,8 @@
 package hoops.ingestion.websocket;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import hoops.ingestion.models.events.GameEvent;
-import hoops.ingestion.services.GameEventService;
+import hoops.common.models.events.GameEvent;
+import hoops.ingestion.services.producers.GameEventProducer;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import org.slf4j.Logger;
@@ -26,19 +26,19 @@ public class GameEventWebSocketHandler extends TextWebSocketHandler {
     private static final Logger logger = LoggerFactory.getLogger(GameEventWebSocketHandler.class);
     
     private final ObjectMapper objectMapper;      // For JSON serialization/deserialization
-    private final GameEventService gameEventService;  // Service to process events
+    private final GameEventProducer gameEventProducer;  // Service to process events
     private final Validator validator;            // For event validation
     
     /**
      * Constructor with required dependencies.
      * @param objectMapper For JSON parsing
-     * @param gameEventService For event processing
+     * @param gameEventProducer For event processing
      * @param validator For event validation
      */
     @Autowired
-    public GameEventWebSocketHandler(ObjectMapper objectMapper, GameEventService gameEventService, Validator validator) {
+    public GameEventWebSocketHandler(ObjectMapper objectMapper, GameEventProducer gameEventProducer, Validator validator) {
         this.objectMapper = objectMapper;
-        this.gameEventService = gameEventService;
+        this.gameEventProducer = gameEventProducer;
         this.validator = validator;
     }
     
@@ -63,7 +63,7 @@ public class GameEventWebSocketHandler extends TextWebSocketHandler {
             Set<ConstraintViolation<GameEvent>> violations = validator.validate(event);
             if (violations.isEmpty()) {
                 // Process valid event
-                gameEventService.processGameEvent(event);
+                gameEventProducer.publishEvent(event);
             } else {
                 // Log validation errors
                 String errors = violations.stream()
