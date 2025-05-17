@@ -11,12 +11,55 @@ build/
 *.ipr
 out/
 
-# Compiled class files
-*.class
+# IDE - VS Code
+.vscode/
+*.code-workspace
+.settings/
+.classpath
+.project
+.factorypath
 
-# Log files
+# Compiled files
+*.class
+bin/
+target/
+out/
+build/
+
+# Logs and databases
 *.log
+*.sqlite
+*.db
 
 # OS specific
 .DS_Store
-Thumbs.db 
+Thumbs.db
+desktop.ini
+
+# Docker
+.docker/
+docker-compose.override.yml
+*.env
+.env.*
+!.env.example
+
+# Test and coverage reports
+coverage/
+reports/
+test-output/
+*.coverage
+.coverage
+htmlcov/
+
+# Application specific
+application-*.properties
+!application.properties
+!application-test.properties
+
+# Temporary files
+*.swp
+*.swo
+*~
+*.tmp
+*.bak
+*.orig 

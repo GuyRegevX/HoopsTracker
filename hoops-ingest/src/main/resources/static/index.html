@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Basketball Stats WebSocket Tester</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .message-box { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .log { height: 300px; overflow-y: auto; background: #f5f5f5; padding: 10px; margin: 10px 0; }
+        button { padding: 10px; margin: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Basketball Stats WebSocket Tester</h1>
+        
+        <div class="message-box">
+            <h3>Send Test Event</h3>
+            <button onclick="sendTestEvent()">Send Points Event</button>
+            <button onclick="sendInvalidEvent()">Send Invalid Event</button>
+        </div>
+
+        <div class="message-box">
+            <h3>Connection Status: <span id="status">Disconnected</span></h3>
+            <button onclick="connect()">Connect</button>
+            <button onclick="disconnect()">Disconnect</button>
+        </div>
+
+        <div class="log" id="log"></div>
+    </div>
+
+    <script>
+        let socket = null;
+
+        function connect() {
+            if (socket) {
+                log('Already connected');
+                return;
+            }
+
+            try {
+                const wsUrl = 'ws://localhost:8082/ws/game_live_update';
+                log('Attempting to connect to ' + wsUrl);
+                log('Current page URL: ' + window.location.href);
+                
+                socket = new WebSocket(wsUrl);
+                
+                socket.onopen = function() {
+                    document.getElementById('status').textContent = 'Connected';
+                    document.getElementById('status').className = 'success';
+                    log('Successfully connected to WebSocket');
+                };
+
+                socket.onclose = function(event) {
+                    document.getElementById('status').textContent = 'Disconnected';
+                    document.getElementById('status').className = 'error';
+                    log('Disconnected from WebSocket. Code: ' + event.code + ' Reason: ' + event.reason);
+                    log('Close Event wasClean: ' + event.wasClean);
+                    socket = null;
+                };
+
+                socket.onerror = function(error) {
+                    document.getElementById('status').textContent = 'Error';
+                    document.getElementById('status').className = 'error';
+                    log('WebSocket Error Details:');
+                    log('- Error Name: ' + error.constructor.name);
+                    log('- Error Message: ' + error.message);
+                    // Try to get more error details if available
+                    if (error.target) {
+                        log('- ReadyState: ' + error.target.readyState);
+                        log('- URL: ' + error.target.url);
+                    }
+                    // Attempt to close socket on error
+                    try {
+                        socket.close();
+                    } catch (e) {
+                        log('Error while closing socket: ' + e.message);
+                    }
+                    socket = null;
+                };
+
+                socket.onmessage = function(event) {
+                    log('Received: ' + event.data);
+                };
+            } catch (error) {
+                document.getElementById('status').textContent = 'Connection Failed';
+                document.getElementById('status').className = 'error';
+                log('Connection Error: ' + error.message);
+                socket = null;
+            }
+        }
+
+        function disconnect() {
+            if (socket) {
+                socket.close();
+                socket = null;
+            }
+        }
+
+        function sendTestEvent() {
+            if (!socket) {
+                log('Not connected');
+                return;
+            }
+
+            const event = {
+                // Game ID format: YYYYMMDDGGG where:
+                // YYYY = year, MM = month, DD = day, GGG = game number
+                gameId: "2024031001",
+                teamId: "BOS",
+                playerId: "jt0",
+                playerName: "Jayson Tatum",
+                event: "point",
+                value: 3,
+                timestamp: new Date().toISOString()
+            };
+
+            socket.send(JSON.stringify(event));
+            log('Sent: ' + JSON.stringify(event));
+        }
+
+        function sendInvalidEvent() {
+            if (!socket) {
+                log('Not connected');
+                return;
+            }
+
+            const event = {
+                // Using same game ID format for consistency
+                gameId: "2024031001",
+                teamId: "BOS",
+                playerId: "jt0",
+                playerName: "Jayson Tatum",
+                event: "point",
+                value: 4, // Invalid: points must be 1-3
+                timestamp: new Date().toISOString()
+            };
+
+            socket.send(JSON.stringify(event));
+            log('Sent invalid event: ' + JSON.stringify(event));
+        }
+
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.textContent = new Date().toLocaleTimeString() + ': ' + message;
+            logDiv.insertBefore(entry, logDiv.firstChild);
+        }
+    </script>
+</body>
+</html> 

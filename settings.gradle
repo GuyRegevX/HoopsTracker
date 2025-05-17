@@ -1,11 +1,6 @@
 rootProject.name = 'hoops-tracker'
 
-// Define the subprojects
 include 'hoops-api'
 include 'hoops-ingest'
-
-// Configure all projects to use the same Gradle installation
-enableFeaturePreview('STABLE_CONFIGURATION_CACHE')
-
-// Ensure each project has a clean build directory
-enableFeaturePreview('STABLE_CONFIGURATION_CACHE')
+include 'hoops-common'
+include 'hoops-processor' 

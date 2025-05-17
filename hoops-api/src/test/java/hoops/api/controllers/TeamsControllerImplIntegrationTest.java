@@ -1,8 +1,8 @@
 package hoops.api.controllers;
 
 import hoops.api.config.TestTimescaleDBConfig;
-import hoops.api.models.dtos.TeamMetaDTO;
-import hoops.api.models.dtos.TeamStatsDTO;
+import hoops.api.models.dtos.teams.TeamMetaDTO;
+import hoops.api.models.dtos.teams.TeamStatsDTO;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,8 +32,8 @@ class TeamsControllerImplIntegrationTest {
     @Autowired
     private TestRestTemplate restTemplate;
 
-    private final String KNOWN_TEAM_ID = "00000000-0000-0000-0000-000000000201";
-    private final String KNOWN_SEASON_ID = "00000000-0000-0000-0000-000000000101";
+    private final String KNOWN_TEAM_ID = "1";
+    private final String KNOWN_SEASON_ID = "1";
 
     @Test
     void getAllTeams_ShouldReturnTeamsFromDatabase() {

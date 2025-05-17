@@ -1,8 +1,8 @@
 package hoops.api.controllers;
 
-import hoops.api.models.dtos.TeamMetaDTO;
-import hoops.api.models.dtos.TeamStatsDTO;
-import hoops.api.services.TeamsService;
+import hoops.api.models.dtos.teams.TeamMetaDTO;
+import hoops.api.models.dtos.teams.TeamStatsDTO;
+import hoops.api.services.teams.TeamsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -38,7 +38,7 @@ public class TeamsController {
     })
     @GetMapping
     public ResponseEntity<List<TeamMetaDTO>> getAllTeams() {
-        log.info("Fetching all teams metadata");
+        log.info("GET /api/v1/teams");
         List<TeamMetaDTO> teams = teamsService.getAllTeams();
         return ResponseEntity.ok(teams);
     }
@@ -53,8 +53,8 @@ public class TeamsController {
     @GetMapping("/{teamId}/stats")
     public ResponseEntity<TeamStatsDTO> getTeamStats(
             @Parameter(description = "Team ID") @PathVariable("teamId") String teamId,
-            @Parameter(description = "Season ID") @RequestParam("seasonId") String seasonId) {
-        log.info("Fetching stats for team {} in season {}", teamId, seasonId);
+            @Parameter(description = "Season ID") @RequestParam(required = true) String seasonId) {
+        log.info("GET /api/v1/teams/{}/stats?seasonId={}", teamId, seasonId);
         TeamStatsDTO stats = teamsService.getTeamStats(teamId, seasonId);
         return stats != null ? ResponseEntity.ok(stats) : ResponseEntity.notFound().build();
     }

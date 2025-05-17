@@ -4,6 +4,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.DependsOn;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.util.StreamUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -58,5 +59,11 @@ public class TestTimescaleDBConfig {
         dataSource.setUsername(timescaledbContainer.getUsername());
         dataSource.setPassword(timescaledbContainer.getPassword());
         return dataSource;
+    }
+
+    @Bean
+    @DependsOn("dataSource")
+    public JdbcTemplate jdbcTemplate(DataSource dataSource) {
+        return new JdbcTemplate(dataSource);
     }
 } 

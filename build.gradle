@@ -32,21 +32,37 @@ subprojects {
 
     group = 'hoops'
     version = '0.0.1-SNAPSHOT'
-    sourceCompatibility = '17'
+    sourceCompatibility = '21'
 
     repositories {
         mavenCentral()
     }
 
+    tasks.withType(JavaCompile) {
+        options.compilerArgs << '-parameters'
+    }
+
+
     dependencies {
         implementation 'org.springframework.boot:spring-boot-starter-web'
         implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
         implementation 'org.postgresql:postgresql'
+        
+        // Add SpringDoc OpenAPI (Swagger) dependencies
+        implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
+        implementation 'org.springdoc:springdoc-openapi-starter-common:2.3.0'
+        
         testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    }
+        compileOnly 'org.projectlombok:lombok:1.18.30'
+        annotationProcessor 'org.projectlombok:lombok:1.18.30'
 
-    compileJava {
-        options.compilerArgs << '-parameters'
+        // Testcontainers
+        testImplementation 'org.testcontainers:testcontainers:1.19.6'
+        testImplementation 'org.testcontainers:junit-jupiter:1.19.6'
+
+        // If not already present, also add
+        testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+
     }
 
     dependencies {
@@ -59,7 +75,6 @@ subprojects {
     }
 }
 
-// Configure specific settings for each subproject
 project(':hoops-api') {
     springBoot {
         mainClass = 'hoops.api.HoopsApiApplication'
@@ -72,11 +87,20 @@ project(':hoops-ingest') {
     }
 }
 
+project(':hoops-common') {
+    bootJar {
+        enabled = false
+    }
+    jar {
+        enabled = true
+    }
+}
+
 // Root project should not produce a jar
 tasks.named('jar') {
     enabled = false
 }
 
 wrapper {
-    gradleVersion = '8.5'
+    gradleVersion = '8.6'
 } 

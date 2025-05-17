@@ -1,11 +1,11 @@
 package hoops.api.services;
 
-import hoops.api.models.dtos.TeamMetaDTO;
-import hoops.api.models.dtos.TeamStatsDTO;
+import hoops.api.models.dtos.teams.TeamMetaDTO;
+import hoops.api.models.dtos.teams.TeamStatsDTO;
 import hoops.api.mappers.TeamMapper;
-import hoops.api.models.entities.Team;
-import hoops.api.models.entities.TeamStats;
-import hoops.api.repositories.TeamsRepository;
+import hoops.api.models.entities.teams.Team;
+import hoops.api.models.entities.teams.TeamStats;
+import hoops.api.repositories.teams.TeamsRepository;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
