@@ -5,6 +5,7 @@ import lombok.Data;
 @Data
 public class TeamStatsDTO {
     private String teamId;
+    private String seasonId;
     private Integer games;
     private Double ppg;  // points per game
     private Double apg;  // assists per game

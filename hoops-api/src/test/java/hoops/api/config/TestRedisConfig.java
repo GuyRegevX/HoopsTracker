@@ -1,15 +1,5 @@
 package hoops.api.config;
 
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.springframework.context.annotation.Bean;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.utility.DockerImageName;
-import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.JedisPoolConfig;
-
-package hoops.api.config;
-
 import java.time.Duration;
 
 import org.springframework.boot.test.context.TestConfiguration;
@@ -34,7 +24,7 @@ public class TestRedisConfig {
     private static final int THREAD_POOL_SIZE = 4;
     
     @Bean
-    @ServiceConnection
+    @ServiceConnection(name = "redis")
     public GenericContainer<?> redisContainer() {
         GenericContainer<?> redis = new GenericContainer<>(REDIS_IMAGE)
             .withExposedPorts(REDIS_PORT)

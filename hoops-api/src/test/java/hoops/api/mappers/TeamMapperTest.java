@@ -1,13 +1,9 @@
 package hoops.api.mappers;
 
-import hoops.api.models.dtos.teams.TeamDTO;
-import hoops.api.models.dtos.teams.TeamMetaDTO;
 import hoops.api.models.dtos.teams.TeamStatsDTO;
-import hoops.api.models.entities.teams.Team;
 import hoops.api.models.entities.teams.TeamStats;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
-import java.time.OffsetDateTime;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TeamMapperTest {

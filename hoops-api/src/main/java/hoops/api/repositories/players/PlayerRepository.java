@@ -4,7 +4,7 @@ import hoops.api.models.entities.players.Player;
 import hoops.api.models.entities.players.PlayerStats;
 import java.util.List;
 
-public interface PlayersRepository {
+public interface PlayerRepository {
     /**
      * Get all players from the database
      * @return List of players with metadata information

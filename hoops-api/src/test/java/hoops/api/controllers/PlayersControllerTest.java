@@ -2,7 +2,7 @@ package hoops.api.controllers;
 
 import hoops.api.models.dtos.players.PlayerMetaDTO;
 import hoops.api.models.dtos.players.PlayerStatsDTO;
-import hoops.api.services.players.PlayersService;
+import hoops.api.services.players.PlayerService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,7 +33,7 @@ class PlayersControllerTest {
     private MockMvc mockMvc;
 
     @MockBean
-    private PlayersService playersService;
+    private PlayerService playerService;
 
     private PlayerMetaDTO testPlayerMetaDTO;
     private PlayerStatsDTO testPlayerStatsDTO;
@@ -69,7 +69,7 @@ class PlayersControllerTest {
     void getAllPlayers_ShouldReturnPlayersList() throws Exception {
         // Given
         List<PlayerMetaDTO> players = Arrays.asList(testPlayerMetaDTO);
-        when(playersService.getAllPlayers()).thenReturn(players);
+        when(playerService.getAllPlayers()).thenReturn(players);
 
         // When/Then
         mockMvc.perform(get("/api/v1/players")
@@ -85,7 +85,7 @@ class PlayersControllerTest {
     @Test
     void getPlayerStats_ShouldReturnStats() throws Exception {
         // Given
-        when(playersService.getPlayerStats(eq(TEST_PLAYER_ID), eq(TEST_SEASON_ID))).thenReturn(testPlayerStatsDTO);
+        when(playerService.getPlayerStats(eq(TEST_PLAYER_ID), eq(TEST_SEASON_ID))).thenReturn(testPlayerStatsDTO);
 
         // When/Then
         mockMvc.perform(get("/api/v1/players/{playerId}/stats", TEST_PLAYER_ID)
@@ -107,7 +107,7 @@ class PlayersControllerTest {
     @Test
     void getPlayerStats_WhenPlayerNotFound_ShouldReturn404() throws Exception {
         // Given
-        when(playersService.getPlayerStats(anyString(), anyString())).thenReturn(null);
+        when(playerService.getPlayerStats(anyString(), anyString())).thenReturn(null);
 
         // When/Then
         mockMvc.perform(get("/api/v1/players/{playerId}/stats", TEST_PLAYER_ID)
