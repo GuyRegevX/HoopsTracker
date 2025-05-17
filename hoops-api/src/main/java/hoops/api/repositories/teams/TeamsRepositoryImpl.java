@@ -1,4 +1,4 @@
-package hoops.api.repositories.teams;
+package hoops.api.repositories.teams; // Update with your actual package name
 
 import hoops.api.models.entities.teams.Team;
 import hoops.api.models.entities.teams.TeamStats;
@@ -6,8 +6,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+
 import javax.sql.DataSource;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,10 +37,10 @@ public class TeamsRepositoryImpl implements TeamsRepository {
             LEFT JOIN leagues l ON t.league_id = l.league_id
             ORDER BY t.name
             """;
-        
+
         try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            
+
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 teams.add(mapResultSetToTeam(rs));
@@ -50,23 +54,32 @@ public class TeamsRepositoryImpl implements TeamsRepository {
 
     @Override
     public TeamStats getTeamStats(String teamId, String seasonId) {
+        // Updated SQL to use team_avg_stats_view materialized view
         String sql = """
-            SELECT team_id, season_id, ppg, apg, rpg,
-                   spg, bpg, topg, mpg, games_played as games,
-                   last_updated
-            FROM team_combined_stats
-            WHERE team_id = ?::uuid AND season_id = ?::uuid
+            SELECT team_id, season_id,
+                   MAX(games) as games,
+                   MAX(ppg) as ppg, 
+                   MAX(apg) as apg, 
+                   MAX(rpg) as rpg,
+                   MAX(spg) as spg, 
+                   MAX(bpg) as bpg, 
+                   MAX(topg) as topg,
+                   MAX(bucket_time) as bucket_time,
+                   MAX(last_updated) as last_updated
+            FROM team_avg_stats_view
+            WHERE team_id = ? AND season_id = ?
+            GROUP BY team_id, season_id
             """;
-        
+
         try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            
+
             ps.setString(1, teamId);
             ps.setString(2, seasonId);
-            
+
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return mapResultSetToTeamStats(rs);
+                    return mapResultSetToTeamStatsFromView(rs);
                 }
             }
         } catch (SQLException e) {
@@ -92,7 +105,8 @@ public class TeamsRepositoryImpl implements TeamsRepository {
         return team;
     }
 
-    private TeamStats mapResultSetToTeamStats(ResultSet rs) throws SQLException {
+    // Updated mapper for team stats from the materialized view
+    private TeamStats mapResultSetToTeamStatsFromView(ResultSet rs) throws SQLException {
         TeamStats stats = new TeamStats();
         stats.setTeamId(rs.getString("team_id"));
         stats.setSeasonId(rs.getString("season_id"));
@@ -103,8 +117,11 @@ public class TeamsRepositoryImpl implements TeamsRepository {
         stats.setSpg(rs.getDouble("spg"));
         stats.setBpg(rs.getDouble("bpg"));
         stats.setTopg(rs.getDouble("topg"));
-        stats.setMpg(rs.getDouble("mpg"));
+
+        // Set mpg to a default value since it's not in the view
+        stats.setMpg(0.0);  // Alternatively, you could calculate it if you have the data
+
         stats.setLastUpdated(rs.getObject("last_updated", OffsetDateTime.class));
         return stats;
     }
-} 
+}

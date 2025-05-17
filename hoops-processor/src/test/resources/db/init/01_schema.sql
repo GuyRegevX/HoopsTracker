@@ -83,4 +83,57 @@ CREATE INDEX idx_player_stat_events_stat_type ON player_stat_events(stat_type);
 CREATE INDEX idx_games_season_id ON games(season_id);
 CREATE INDEX idx_games_league_id ON games(league_id);
 CREATE INDEX idx_players_team_id ON players(team_id);
-CREATE INDEX idx_teams_league_id ON teams(league_id); 
+CREATE INDEX idx_teams_league_id ON teams(league_id);
+
+-- Create the team_avg_stats_view materialized view
+CREATE MATERIALIZED VIEW team_avg_stats_view
+WITH (timescaledb.continuous, timescaledb.materialized_only=false) AS
+SELECT
+    team_id,
+    season_id,
+    time_bucket('1 day', created_at) AS bucket_time,
+    COUNT(DISTINCT game_id) AS games,
+    AVG(CASE WHEN stat_type = 'point' THEN stat_value ELSE 0 END) AS ppg,
+    AVG(CASE WHEN stat_type = 'assist' THEN stat_value ELSE 0 END) AS apg,
+    AVG(CASE WHEN stat_type = 'rebound' THEN stat_value ELSE 0 END) AS rpg,
+    AVG(CASE WHEN stat_type = 'steal' THEN stat_value ELSE 0 END) AS spg,
+    AVG(CASE WHEN stat_type = 'block' THEN stat_value ELSE 0 END) AS bpg,
+    AVG(CASE WHEN stat_type = 'turnover' THEN stat_value ELSE 0 END) AS topg,
+    AVG(CASE WHEN stat_type = 'minute' THEN stat_value ELSE 0 END) AS mpg,
+    MAX(created_at) AS last_updated
+FROM player_stat_events
+GROUP BY team_id, season_id, time_bucket('1 day', created_at);
+
+
+-- Set the refresh policy with a 1-second delay (real-time aggregation)
+SELECT add_continuous_aggregate_policy('team_avg_stats_view',
+    start_offset => INTERVAL '1 month',
+    end_offset => INTERVAL '1 second',
+    schedule_interval => INTERVAL '10 minute');
+
+-- Create the player_avg_stats_view materialized view
+CREATE MATERIALIZED VIEW player_avg_stats_view
+WITH (timescaledb.continuous, timescaledb.materialized_only=false) AS
+SELECT
+    player_id,
+    team_id,
+    season_id,
+    time_bucket('1 day', created_at) AS bucket_time,
+    COUNT(DISTINCT game_id) AS games,
+    AVG(CASE WHEN stat_type = 'point' THEN stat_value ELSE 0 END) AS ppg,
+    AVG(CASE WHEN stat_type = 'assist' THEN stat_value ELSE 0 END) AS apg,
+    AVG(CASE WHEN stat_type = 'rebound' THEN stat_value ELSE 0 END) AS rpg,
+    AVG(CASE WHEN stat_type = 'steal' THEN stat_value ELSE 0 END) AS spg,
+    AVG(CASE WHEN stat_type = 'block' THEN stat_value ELSE 0 END) AS bpg,
+    AVG(CASE WHEN stat_type = 'turnover' THEN stat_value ELSE 0 END) AS topg,
+    AVG(CASE WHEN stat_type = 'minute' THEN stat_value ELSE 0 END) AS mpg,
+    MAX(created_at) AS last_updated
+FROM player_stat_events
+GROUP BY player_id, team_id, season_id, time_bucket('1 day', created_at);
+
+-- Set a 10-minute refresh policy
+SELECT add_continuous_aggregate_policy('player_avg_stats_view',
+    start_offset => INTERVAL '1 month',
+    end_offset => INTERVAL '1 second',
+    schedule_interval => INTERVAL '10 minutes');
+

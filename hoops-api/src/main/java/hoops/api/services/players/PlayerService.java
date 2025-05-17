@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * Service interface for managing player-related operations
  */
-public interface PlayersService {
+public interface PlayerService {
     /**
      * Get all players with their metadata
      * @return List of player DTOs with metadata

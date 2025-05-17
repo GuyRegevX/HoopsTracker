@@ -7,6 +7,7 @@ import java.time.OffsetDateTime;
 public class PlayerStats {
     private String playerId;
     private String seasonId;
+    private String teamId;
     private Integer games;
     private Double ppg;  // points per game
     private Double apg;  // assists per game
