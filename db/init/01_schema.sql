@@ -93,12 +93,13 @@ SELECT
     season_id,
     time_bucket('1 day', created_at) AS bucket_time,
     COUNT(DISTINCT game_id) AS games,
-    AVG(CASE WHEN stat_type = 'points' THEN stat_value ELSE 0 END) AS ppg,
-    AVG(CASE WHEN stat_type = 'assists' THEN stat_value ELSE 0 END) AS apg,
-    AVG(CASE WHEN stat_type = 'rebounds' THEN stat_value ELSE 0 END) AS rpg,
-    AVG(CASE WHEN stat_type = 'steals' THEN stat_value ELSE 0 END) AS spg,
-    AVG(CASE WHEN stat_type = 'blocks' THEN stat_value ELSE 0 END) AS bpg,
-    AVG(CASE WHEN stat_type = 'turnovers' THEN stat_value ELSE 0 END) AS topg,
+    AVG(CASE WHEN stat_type = 'point' THEN stat_value ELSE 0 END) AS ppg,
+    AVG(CASE WHEN stat_type = 'assist' THEN stat_value ELSE 0 END) AS apg,
+    AVG(CASE WHEN stat_type = 'rebound' THEN stat_value ELSE 0 END) AS rpg,
+    AVG(CASE WHEN stat_type = 'steal' THEN stat_value ELSE 0 END) AS spg,
+    AVG(CASE WHEN stat_type = 'block' THEN stat_value ELSE 0 END) AS bpg,
+    AVG(CASE WHEN stat_type = 'turnover' THEN stat_value ELSE 0 END) AS topg,
+    AVG(CASE WHEN stat_type = 'minute' THEN stat_value ELSE 0 END) AS mpg,
     MAX(created_at) AS last_updated
 FROM player_stat_events
 GROUP BY team_id, season_id, time_bucket('1 day', created_at);
@@ -115,19 +116,20 @@ CREATE MATERIALIZED VIEW player_avg_stats_view
 WITH (timescaledb.continuous, timescaledb.materialized_only=false) AS
 SELECT
     player_id,
+    team_id,
     season_id,
     time_bucket('1 day', created_at) AS bucket_time,
     COUNT(DISTINCT game_id) AS games,
-    AVG(CASE WHEN stat_type = 'points' THEN stat_value ELSE 0 END) AS ppg,
-    AVG(CASE WHEN stat_type = 'assists' THEN stat_value ELSE 0 END) AS apg,
-    AVG(CASE WHEN stat_type = 'rebounds' THEN stat_value ELSE 0 END) AS rpg,
-    AVG(CASE WHEN stat_type = 'steals' THEN stat_value ELSE 0 END) AS spg,
-    AVG(CASE WHEN stat_type = 'blocks' THEN stat_value ELSE 0 END) AS bpg,
-    AVG(CASE WHEN stat_type = 'turnovers' THEN stat_value ELSE 0 END) AS topg,
-    AVG(CASE WHEN stat_type = 'minutes' THEN stat_value ELSE 0 END) AS mpg,
+    AVG(CASE WHEN stat_type = 'point' THEN stat_value ELSE 0 END) AS ppg,
+    AVG(CASE WHEN stat_type = 'assist' THEN stat_value ELSE 0 END) AS apg,
+    AVG(CASE WHEN stat_type = 'rebound' THEN stat_value ELSE 0 END) AS rpg,
+    AVG(CASE WHEN stat_type = 'steal' THEN stat_value ELSE 0 END) AS spg,
+    AVG(CASE WHEN stat_type = 'block' THEN stat_value ELSE 0 END) AS bpg,
+    AVG(CASE WHEN stat_type = 'turnover' THEN stat_value ELSE 0 END) AS topg,
+    AVG(CASE WHEN stat_type = 'minute' THEN stat_value ELSE 0 END) AS mpg,
     MAX(created_at) AS last_updated
 FROM player_stat_events
-GROUP BY player_id, season_id, time_bucket('1 day', created_at);
+GROUP BY player_id, team_id, season_id, time_bucket('1 day', created_at);
 
 -- Set a 10-minute refresh policy
 SELECT add_continuous_aggregate_policy('player_avg_stats_view',
@@ -135,9 +137,3 @@ SELECT add_continuous_aggregate_policy('player_avg_stats_view',
     end_offset => INTERVAL '1 second',
     schedule_interval => INTERVAL '10 minutes');
 
-
--- Set the refresh policy with a 10-minute schedule interval
-SELECT add_continuous_aggregate_policy('player_avg_stats_view',
-    start_offset => INTERVAL '1 month',
-    end_offset => INTERVAL '1 second',
-    schedule_interval => INTERVAL '10 minutes');
