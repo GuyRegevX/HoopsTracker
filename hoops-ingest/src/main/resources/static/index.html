@@ -17,8 +17,72 @@
             color: white;
             padding: 15px;
             text-align: center;
+            margin-bottom: 0;  /* Changed to 0 to remove gap before nav */
+            border-radius: 8px 8px 0 0;  /* Rounded only top corners */
+        }
+
+        .nav-links {
+            background-color: #f8f9fa;
+            padding: 10px 15px;
             margin-bottom: 20px;
-            border-radius: 8px;
+            border-radius: 0 0 8px 8px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+        }
+
+        .nav-links a {
+            color: #1976d2;
+            text-decoration: none;
+            margin: 0 15px;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+
+        .nav-links a:hover {
+            background-color: #e3f2fd;
+            text-decoration: underline;
+        }
+
+        .nav-links span.separator {
+            color: #dee2e6;
+            margin: 0 5px;
+        }
+
+        .section-header {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            margin-bottom: 15px;
+            gap: 20px;
+        }
+
+        .section-header h3 {
+            margin: 0;
+            text-align: center;
+            grid-column: 2;
+            color: #1976d2;
+        }
+
+        .api-url {
+            font-size: 12px;
+            color: #666;
+            font-weight: normal;
+            font-family: monospace;
+            text-align: left;
+            grid-column: 1;
+        }
+
+        .api-url-list {
+            font-size: 12px;
+            color: #666;
+            font-weight: normal;
+            font-family: monospace;
+            text-align: left;
+            line-height: 1.5;
+            grid-column: 1;
         }
 
         .container {
@@ -77,13 +141,21 @@
             color: #1976d2;
         }
 
-        .stats-table {
-            width: 100%;
-            border-collapse: collapse;
+        .stats-table-container {
             margin-top: 10px;
             background-color: white;
             border-radius: 8px;
             overflow: hidden;
+            min-height: 200px; /* Minimum height to prevent jumping */
+            position: relative;
+        }
+
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            border-radius: 8px;
+            table-layout: fixed; /* Fixed table layout to prevent column width changes */
         }
 
         .stats-table th,
@@ -91,6 +163,11 @@
             padding: 12px;
             text-align: left;
             border-bottom: 1px solid #eee;
+            transition: all 0.2s ease; /* Smooth transition for updates */
+        }
+
+        .stats-table tr {
+            transition: background-color 0.2s ease;
         }
 
         .stats-table th {
@@ -139,17 +216,150 @@
             font-size: 12px;
             margin-top: 5px;
         }
+
+        /* Add loading overlay styles */
+        .loading-overlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #1976d2;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Add toast notification styles */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .toast {
+            background: #333;
+            color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px;
+            max-width: 500px;
+            font-family: monospace;
+            white-space: pre;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transform: translateY(100%);
+            transition: all 0.3s ease;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast .json-key {
+            color: #89CFF0;
+        }
+
+        .toast .json-string {
+            color: #98FB98;
+        }
+
+        .toast .json-number {
+            color: #FFA07A;
+        }
+
+        .data-flow {
+            font-family: monospace;
+            color: #666;
+            font-size: 14px;
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        .data-flow .component {
+            color: #1976d2;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .data-flow .arrow {
+            color: #999;
+            margin: 0 8px;
+        }
+
+        .data-flow .icon {
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>NBA Stats Dashboard</h1>
     </div>
+    
+    <div class="nav-links">
+        <a href="http://localhost:8080/swagger-ui/index.html" target="_blank">📚 Swagger UI (Players/Teams API)</a>
+        <span class="separator">|</span>
+        <a href="http://localhost:9081" target="_blank">⚡ Redis Commander</a>
+        <span class="separator">|</span>
+        <a href="http://localhost:9080" target="_blank">🗄️ PgWeb (Database)</a>
+    </div>
 
     <div class="container">
+        <!-- Add toast container -->
+        <div class="toast-container" id="toastContainer"></div>
+
         <!-- Live Stats Entry Section -->
         <div class="stats-section">
-            <h3>Live Stats Entry</h3>
+            <div class="section-header">
+                <h3>Live Stats Entry</h3>
+            </div>
+            <div class="data-flow">
+                <span class="component">
+                    <span class="icon">🔌</span>
+                    Ingest (WS)
+                </span>
+                <span class="arrow">→</span>
+                <span class="component">
+                    <span class="icon">⚡</span>
+                    Redis Streams
+                </span>
+                <span class="arrow">→</span>
+                <span class="component">
+                    <span class="icon">⚙️</span>
+                    Processor (Del Cache)
+                </span>
+                <span class="arrow">→</span>
+                <span class="component">
+                    <span class="icon">🗄️</span>
+                    DB (TimescaleDB)
+                </span>
+                <span class="arrow">→</span>
+                <span class="component">
+                    <span class="icon">🔄</span>
+                    REST API (Populate Cache)
+                </span>
+            </div>
+
             <div class="live-stats-guide">
                 <h4>How to Update Game Statistics</h4>
                 <ul>
@@ -160,6 +370,7 @@
                     <li>Changes will appear in the statistics tables below within seconds</li>
                 </ul>
             </div>
+
             <div style="display: flex; flex-direction: column; gap: 15px; padding: 15px;">
                 <div style="display: flex; gap: 10px; align-items: center;">
                     <label style="min-width: 100px;">Team:</label>
@@ -208,18 +419,31 @@
                     Send Event
                 </button>
 
+                <div class="api-url" style="text-align: center; margin: 15px 0 5px 0; padding-top: 10px; border-top: 1px solid #eee;">
+                    WebSocket: ws://localhost:8082/ws/game_live_update
+                </div>
+
                 <div id="eventStatus" style="margin-top: 10px; padding: 10px; border-radius: 4px; display: none;"></div>
             </div>
         </div>
 
         <!-- Teams Section -->
         <div class="stats-section">
-            <h3>NBA Teams Statistics</h3>
+            <div class="section-header">
+                <h3>NBA Teams Statistics</h3>
+                <div class="api-url-list">
+                    Teams: GET: http://localhost:8080/api/v1/teams<br>
+                    Stats: GET: http://localhost:8080/api/v1/teams/{teamId}/stats
+                </div>
+            </div>
             <div class="filter-container">
                 <span class="filter-label">Filter Teams:</span>
                 <input type="text" id="teamFilter" class="filter-input" placeholder="Enter team name...">
             </div>
             <div class="stats-table-container">
+                <div class="loading-overlay">
+                    <div class="loading-spinner"></div>
+                </div>
                 <table class="stats-table" id="teamsTable">
                     <thead>
                         <tr>
@@ -242,7 +466,13 @@
 
         <!-- Players Section -->
         <div class="stats-section">
-            <h3>NBA Players Statistics</h3>
+            <div class="section-header">
+                <h3>NBA Players Statistics</h3>
+                <div class="api-url-list">
+                    Players: GET: http://localhost:8080/api/v1/players<br>
+                    Stats: GET: http://localhost:8080/api/v1/players/{playerId}/stats
+                </div>
+            </div>
             <div class="filter-container">
                 <span class="filter-label">Filter Players:</span>
                 <input type="text" id="playerFilter" class="filter-input" placeholder="Enter player name...">
@@ -251,6 +481,9 @@
                 </select>
             </div>
             <div class="stats-table-container">
+                <div class="loading-overlay">
+                    <div class="loading-spinner"></div>
+                </div>
                 <table class="stats-table" id="playersTable">
                     <thead>
                         <tr>
@@ -559,6 +792,35 @@
             }, 3000);
         }
 
+        // Function to show JSON toast
+        function showJsonToast(data) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            
+            // Pretty print JSON with syntax highlighting
+            const prettyJson = JSON.stringify(data, null, 2)
+                .replace(/(".*?")/g, '<span class="json-string">$1</span>')
+                .replace(/(\d+)/g, '<span class="json-number">$1</span>')
+                .replace(/(".*?"):/g, '<span class="json-key">$1</span>:');
+            
+            toast.innerHTML = `Sent Event Data:\n${prettyJson}`;
+            
+            container.appendChild(toast);
+            
+            // Trigger reflow for animation
+            toast.offsetHeight;
+            toast.classList.add('show');
+            
+            // Remove toast after 5 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    container.removeChild(toast);
+                }, 300);
+            }, 5000);
+        }
+
         // Function to send test event
         function sendTestEvent() {
             const teamSelect = document.getElementById('testTeam');
@@ -586,12 +848,15 @@
             
             const testEvent = {
                 gameId: gameId,
-                teamId: teamCode, // Using team ID directly now
+                teamId: teamCode,
                 playerId: playerId,
                 event: eventType,
                 value: value,
                 version: Math.floor(Math.random() * 1000000) + 1
             };
+            
+            // Show JSON toast before sending
+            showJsonToast(testEvent);
             
             sendGameEvent(testEvent);
             showEventStatus('Event sent! Stats will update shortly...');
@@ -660,29 +925,67 @@
             // Keep the first "All Teams" option
             teamFilterSelect.innerHTML = '<option value="">All Teams</option>';
             
-            // Add hardcoded teams
-            const teamNames = {
-                'BOS': 'Boston Celtics',
-                'LAL': 'Los Angeles Lakers',
-                'GSW': 'Golden State Warriors',
-                'MIA': 'Miami Heat',
-                'PHX': 'Phoenix Suns'
-            };
-            
-            // Add teams sorted by name
-            Object.entries(teamNames)
-                .sort((a, b) => a[1].localeCompare(b[1]))
-                .forEach(([code, name]) => {
+            // Add teams from the server data
+            Object.values(window.teams)
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .forEach(team => {
                     const option = document.createElement('option');
-                    option.value = code;
-                    option.textContent = name;
+                    option.value = team.id;
+                    option.textContent = team.name;
                     teamFilterSelect.appendChild(option);
                 });
         }
 
-        // Function to load teams and their stats
+        // Function to update table rows smoothly
+        function updateTableRows(tbody, newRows, errorMessage, colspan) {
+            const currentRows = Array.from(tbody.children);
+            
+            // If there's an error, show error message
+            if (errorMessage) {
+                const errorRow = document.createElement('tr');
+                errorRow.innerHTML = `<td colspan="${colspan}" class="error">${errorMessage}</td>`;
+                tbody.innerHTML = '';
+                tbody.appendChild(errorRow);
+                return;
+            }
+
+            // Update existing rows or create new ones
+            newRows.forEach((newRowData, index) => {
+                const existingRow = currentRows[index];
+                if (existingRow) {
+                    // Update existing row cells
+                    Array.from(existingRow.children).forEach((cell, cellIndex) => {
+                        const newValue = newRowData.cells[cellIndex];
+                        if (cell.textContent !== newValue) {
+                            cell.textContent = newValue;
+                            cell.style.backgroundColor = '#e3f2fd';
+                            setTimeout(() => {
+                                cell.style.backgroundColor = '';
+                            }, 500);
+                        }
+                    });
+                } else {
+                    // Create new row
+                    const row = document.createElement('tr');
+                    row.innerHTML = newRowData.html;
+                    tbody.appendChild(row);
+                }
+            });
+
+            // Remove extra rows if any
+            while (currentRows.length > newRows.length) {
+                tbody.removeChild(tbody.lastChild);
+            }
+        }
+
+        // Modified loadTeamsStats function
         async function loadTeamsStats() {
+            const tbody = document.getElementById('teamsTable').querySelector('tbody');
+            const container = tbody.closest('.stats-table-container');
+            const loadingOverlay = container.querySelector('.loading-overlay');
+            
             try {
+                loadingOverlay.style.display = 'flex';
                 console.log('Loading teams stats...');
                 const response = await fetch('http://localhost:8080/api/v1/teams');
                 if (!response.ok) {
@@ -693,8 +996,7 @@
                 // Reset teams object
                 Object.keys(window.teams).forEach(key => delete window.teams[key]);
                 
-                const tbody = document.getElementById('teamsTable').querySelector('tbody');
-                tbody.innerHTML = '';
+                const newRows = [];
                 
                 // Process teams and their stats
                 if (Array.isArray(teamsData)) {
@@ -710,19 +1012,30 @@
                                 if (!statsResponse.ok) continue;
                                 
                                 const stats = await statsResponse.json();
-                                const row = document.createElement('tr');
-                                row.innerHTML = `
-                                    <td>${team.name}</td>
-                                    <td>${(stats.ppg || 0).toFixed(1)}</td>
-                                    <td>${(stats.apg || 0).toFixed(1)}</td>
-                                    <td>${(stats.rpg || 0).toFixed(1)}</td>
-                                    <td>${(stats.spg || 0).toFixed(1)}</td>
-                                    <td>${(stats.bpg || 0).toFixed(1)}</td>
-                                    <td>${(stats.topg || 0).toFixed(1)}</td>
-                                    <td>${(stats.mpg || 0).toFixed(1)}</td>
-                                    <td>${stats.games || 0}</td>
-                                `;
-                                tbody.appendChild(row);
+                                newRows.push({
+                                    cells: [
+                                        team.name,
+                                        (stats.ppg || 0).toFixed(1),
+                                        (stats.apg || 0).toFixed(1),
+                                        (stats.rpg || 0).toFixed(1),
+                                        (stats.spg || 0).toFixed(1),
+                                        (stats.bpg || 0).toFixed(1),
+                                        (stats.topg || 0).toFixed(1),
+                                        (stats.mpg || 0).toFixed(1),
+                                        stats.games || 0
+                                    ],
+                                    html: `
+                                        <td>${team.name}</td>
+                                        <td>${(stats.ppg || 0).toFixed(1)}</td>
+                                        <td>${(stats.apg || 0).toFixed(1)}</td>
+                                        <td>${(stats.rpg || 0).toFixed(1)}</td>
+                                        <td>${(stats.spg || 0).toFixed(1)}</td>
+                                        <td>${(stats.bpg || 0).toFixed(1)}</td>
+                                        <td>${(stats.topg || 0).toFixed(1)}</td>
+                                        <td>${(stats.mpg || 0).toFixed(1)}</td>
+                                        <td>${stats.games || 0}</td>
+                                    `
+                                });
                             } catch (error) {
                                 console.error(`Error loading stats for team ${team.name}:`, error);
                             }
@@ -730,14 +1043,16 @@
                     }
                 }
                 
-                // Update team filter
+                updateTableRows(tbody, newRows, null, 9);
                 updateTeamFilter();
+                updatePlayersTeamFilter();
                 updateLastUpdated('teamsLastUpdated');
                 lastTeamsUpdate = new Date();
             } catch (error) {
                 console.error('Error loading teams stats:', error);
-                const tbody = document.getElementById('teamsTable').querySelector('tbody');
-                tbody.innerHTML = '<tr><td colspan="9" class="error">Failed to load teams statistics</td></tr>';
+                updateTableRows(tbody, [], 'Failed to load teams statistics', 9);
+            } finally {
+                loadingOverlay.style.display = 'none';
             }
         }
 
@@ -760,47 +1075,43 @@
                 });
         }
 
-        // Function to load players stats
+        // Modified loadPlayersStats function
         async function loadPlayersStats() {
+            const tbody = document.getElementById('playersTable').querySelector('tbody');
+            const container = tbody.closest('.stats-table-container');
+            const loadingOverlay = container.querySelector('.loading-overlay');
+            
             try {
+                loadingOverlay.style.display = 'flex';
                 console.log('Loading players stats...');
-                const response = await fetch('http://localhost:8080/api/v1/players');
+
+                // First, ensure we have fresh team data
+                const teamsResponse = await fetch('http://localhost:8080/api/v1/teams');
+                if (!teamsResponse.ok) {
+                    throw new Error(`Failed to load teams: ${teamsResponse.status}`);
+                }
+                const teamsData = await teamsResponse.json();
                 
-                // Log the response details
-                console.log('Player list response status:', response.status);
+                // Create teams lookup map
+                const teamsMap = {};
+                teamsData.forEach(team => {
+                    teamsMap[team.teamId] = team.name;
+                });
+
+                // Now load players
+                const response = await fetch('http://localhost:8080/api/v1/players');
                 if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('Error response:', errorText);
-                    throw new Error(`Failed to load players: ${response.status} - ${errorText}`);
+                    throw new Error(`Failed to load players: ${response.status}`);
                 }
                 
                 const players = await response.json();
-                console.log('Loaded players:', players);
+                const newRows = [];
                 
-                const tbody = document.getElementById('playersTable').querySelector('tbody');
-                if (!tbody) {
-                    console.error('Players table body not found');
-                    return;
-                }
-                tbody.innerHTML = '';
-                
-                if (!Array.isArray(players)) {
-                    console.error('Received players data:', players);
-                    throw new Error('Players data is not in expected format');
-                }
-
                 // Fetch all player stats in parallel
                 const playerStatsPromises = players.map(async (player) => {
                     try {
-                        console.log(`Fetching stats for player ${player.name} (ID: ${player.playerId})`);
                         const statsResponse = await fetch(`http://localhost:8080/api/v1/players/${player.playerId}/stats?seasonId=${currentSeasonId}`);
-                        
-                        if (!statsResponse.ok) {
-                            const errorText = await statsResponse.text();
-                            console.warn(`Failed to load stats for player ${player.name}: ${statsResponse.status} - ${errorText}`);
-                            return null;
-                        }
-                        
+                        if (!statsResponse.ok) return null;
                         const stats = await statsResponse.json();
                         return { player, stats };
                     } catch (error) {
@@ -809,46 +1120,51 @@
                     }
                 });
 
-                // Wait for all stats to be fetched
-                console.log('Waiting for all player stats to be fetched...');
                 const results = await Promise.allSettled(playerStatsPromises);
                 
-                // Process successful results
-                let successCount = 0;
                 results.forEach(result => {
                     if (result.status === 'fulfilled' && result.value) {
-                        successCount++;
                         const { player, stats } = result.value;
-                        const team = window.teams[player.teamId]?.name || 'Unknown Team';
+                        // Use the teamsMap to get team name
+                        const teamName = teamsMap[player.teamId] || 'Team Not Found';
                         
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td>${player.name || 'Unknown Player'}</td>
-                            <td>${team}</td>
-                            <td>${(stats.ppg || 0).toFixed(1)}</td>
-                            <td>${(stats.apg || 0).toFixed(1)}</td>
-                            <td>${(stats.rpg || 0).toFixed(1)}</td>
-                            <td>${(stats.spg || 0).toFixed(1)}</td>
-                            <td>${(stats.bpg || 0).toFixed(1)}</td>
-                            <td>${(stats.topg || 0).toFixed(1)}</td>
-                            <td>${(stats.mpg || 0).toFixed(1)}</td>
-                            <td>${stats.games || 0}</td>
-                        `;
-                        tbody.appendChild(row);
+                        newRows.push({
+                            cells: [
+                                player.name || 'Unknown Player',
+                                teamName,
+                                (stats.ppg || 0).toFixed(1),
+                                (stats.apg || 0).toFixed(1),
+                                (stats.rpg || 0).toFixed(1),
+                                (stats.spg || 0).toFixed(1),
+                                (stats.bpg || 0).toFixed(1),
+                                (stats.topg || 0).toFixed(1),
+                                (stats.mpg || 0).toFixed(1),
+                                stats.games || 0
+                            ],
+                            html: `
+                                <td>${player.name || 'Unknown Player'}</td>
+                                <td>${teamName}</td>
+                                <td>${(stats.ppg || 0).toFixed(1)}</td>
+                                <td>${(stats.apg || 0).toFixed(1)}</td>
+                                <td>${(stats.rpg || 0).toFixed(1)}</td>
+                                <td>${(stats.spg || 0).toFixed(1)}</td>
+                                <td>${(stats.bpg || 0).toFixed(1)}</td>
+                                <td>${(stats.topg || 0).toFixed(1)}</td>
+                                <td>${(stats.mpg || 0).toFixed(1)}</td>
+                                <td>${stats.games || 0}</td>
+                            `
+                        });
                     }
                 });
                 
-                console.log(`Successfully loaded stats for ${successCount} out of ${players.length} players`);
-                
+                updateTableRows(tbody, newRows, null, 10);
                 updateLastUpdated('playersLastUpdated');
                 lastPlayersUpdate = new Date();
             } catch (error) {
                 console.error('Error loading players:', error);
-                const tbody = document.getElementById('playersTable').querySelector('tbody');
-                if (tbody) {
-                    tbody.innerHTML = '<tr><td colspan="10" class="error">Failed to load players statistics: ' + error.message + '</td></tr>';
-                }
-                showEventStatus('Failed to load players: ' + error.message, true);
+                updateTableRows(tbody, [], 'Failed to load players statistics: ' + error.message, 10);
+            } finally {
+                loadingOverlay.style.display = 'none';
             }
         }
 
@@ -869,21 +1185,34 @@
             }
 
             function filterPlayers() {
-                const nameFilter = playerFilter.value.toLowerCase();
-                const teamFilter = teamFilterSelect.value.toLowerCase();
+                const nameFilter = playerFilter.value.toLowerCase().trim();
+                const teamFilter = teamFilterSelect.value;
                 const rows = document.querySelectorAll('#playersTable tbody tr');
                 
                 rows.forEach(row => {
                     const playerName = row.cells[0].textContent.toLowerCase();
-                    const teamName = row.cells[1].textContent.toLowerCase();
-                    const matchesName = playerName.includes(nameFilter);
-                    const matchesTeam = !teamFilter || teamName.includes(teamFilter);
+                    const teamName = row.cells[1].textContent;
+                    
+                    // Show all rows if no filters are active
+                    if (!nameFilter && !teamFilter) {
+                        row.style.display = '';
+                        return;
+                    }
+                    
+                    const matchesName = !nameFilter || playerName.includes(nameFilter);
+                    const matchesTeam = !teamFilter || teamName.includes(teamFilterSelect.options[teamFilterSelect.selectedIndex].text);
                     row.style.display = (matchesName && matchesTeam) ? '' : 'none';
                 });
             }
 
             if (teamFilter) teamFilter.addEventListener('input', filterTeams);
-            if (playerFilter) playerFilter.addEventListener('input', filterPlayers);
+            if (playerFilter) {
+                let filterTimeout;
+                playerFilter.addEventListener('input', () => {
+                    clearTimeout(filterTimeout);
+                    filterTimeout = setTimeout(filterPlayers, 300);
+                });
+            }
             if (teamFilterSelect) teamFilterSelect.addEventListener('change', filterPlayers);
         }
 

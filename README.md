@@ -28,9 +28,9 @@ Run the test suite:
 ./gradlew test
 ```
 
-## Base URL
+## Test page URL
 ```
-http://localhost:8080/api/v1
+http://localhost:8082 
 ```
 
 ## Authentication
