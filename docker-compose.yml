@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: hoopspass
       TIMESCALEDB_TELEMETRY: "off"
     ports:
-      - "5433:5432"
+      - "5432:5432"
     volumes:
       - timescale_data:/var/lib/postgresql/data
       - ./db/init:/docker-entrypoint-initdb.d
@@ -95,8 +95,6 @@ services:
     ports:
       - "8082:8082"
     depends_on:
-      timescaledb:
-        condition: service_healthy
       redis:
         condition: service_healthy
     networks:

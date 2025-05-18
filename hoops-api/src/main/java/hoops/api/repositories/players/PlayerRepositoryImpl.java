@@ -50,22 +50,24 @@ public class PlayerRepositoryImpl implements PlayerRepository {
     public PlayerStats getPlayerStats(String playerId, String seasonId) {
         // Updated SQL to use player_avg_stats_view materialized view
         String sql = """
-            SELECT player_id, team_id, season_id,
-                   MAX(games) as games,
-                   MAX(ppg) as ppg, 
-                   MAX(apg) as apg, 
-                   MAX(rpg) as rpg,
-                   MAX(spg) as spg, 
-                   MAX(bpg) as bpg, 
-                   MAX(topg) as topg,
-                   MAX(mpg) as mpg,
-                   MAX(bucket_time) as bucket_time,
-                   MAX(last_updated) as last_updated
-            FROM player_avg_stats_view
-            WHERE player_id = ?
-            AND season_id = ?
-            GROUP BY player_id, team_id, season_id
-            """;
+        SELECT 
+            player_id, 
+            team_id, 
+            season_id,
+            games,
+            ppg, 
+            apg, 
+            rpg,
+            spg, 
+            bpg, 
+            topg,
+            mpg,
+            last_updated
+        FROM player_avg_stats_view
+        WHERE player_id = ?
+        AND season_id = ?
+        """;
+
 
         try {
             List<PlayerStats> stats = jdbcTemplate.query(sql, statsRowMapper, playerId, seasonId);

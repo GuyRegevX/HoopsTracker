@@ -1,7 +1,6 @@
 package hoops.api.services.teams;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import hoops.api.mappers.TeamMapper;
 import hoops.api.models.dtos.teams.TeamMetaDTO;
 import hoops.api.models.dtos.teams.TeamStatsDTO;
@@ -14,7 +13,6 @@ import io.lettuce.core.api.sync.RedisCommands;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 

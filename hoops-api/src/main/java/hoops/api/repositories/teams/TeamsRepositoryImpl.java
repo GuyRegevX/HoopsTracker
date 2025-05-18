@@ -54,22 +54,23 @@ public class TeamsRepositoryImpl implements TeamsRepository {
 
     @Override
     public TeamStats getTeamStats(String teamId, String seasonId) {
-        // Updated SQL to use team_avg_stats_view materialized view
         String sql = """
-            SELECT team_id, season_id,
-                   MAX(games) as games,
-                   MAX(ppg) as ppg, 
-                   MAX(apg) as apg, 
-                   MAX(rpg) as rpg,
-                   MAX(spg) as spg, 
-                   MAX(bpg) as bpg, 
-                   MAX(topg) as topg,
-                   MAX(bucket_time) as bucket_time,
-                   MAX(last_updated) as last_updated
-            FROM team_avg_stats_view
-            WHERE team_id = ? AND season_id = ?
-            GROUP BY team_id, season_id
-            """;
+        SELECT 
+            team_id, 
+            season_id,
+            games,
+            ppg, 
+            apg, 
+            rpg,
+            spg, 
+            bpg, 
+            topg,
+            mpg,
+            last_updated
+        FROM team_avg_stats_view
+        WHERE team_id = ?
+        AND season_id = ?
+        """;
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
