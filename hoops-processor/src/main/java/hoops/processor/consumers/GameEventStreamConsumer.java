@@ -16,6 +16,8 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Map;
 
+import static hoops.common.constants.StreamConstants.GAME_EVENTS_CONSUMER_GROUP;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -40,7 +42,7 @@ public class GameEventStreamConsumer {
 
     @PostConstruct
     public void init() {
-        redisStreamManager.createConsumerGroup(StreamConstants.GAME_EVENTS_STREAM, CONSUMER_GROUP);
+        redisStreamManager.createConsumerGroup(StreamConstants.GAME_EVENTS_STREAM, GAME_EVENTS_CONSUMER_GROUP);
     }
 
     @Scheduled(fixedDelayString = "${redis.stream.poll-interval-ms:1000}")
@@ -55,7 +57,7 @@ public class GameEventStreamConsumer {
             // Read batch of messages
             List<StreamMessage<String, String>> messages = redisStreamManager.readGroupMessages(
                     StreamConstants.GAME_EVENTS_STREAM,
-                    CONSUMER_GROUP,
+                    GAME_EVENTS_CONSUMER_GROUP,
                     CONSUMER_NAME,
                     batchSize,
                     pollTimeoutMs
@@ -65,7 +67,7 @@ public class GameEventStreamConsumer {
                 return;
             }
 
-            // Process messages
+            // Process messages.  In real life I would work in batched
             for (StreamMessage<String, String> message : messages) {
                 try {
                     // Check if this is a metadata/init message

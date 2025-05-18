@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NBA Game Simulator</title>
+    <title>NBA Stats Dashboard</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -26,90 +26,55 @@
             margin: 0 auto;
         }
 
-        .team-select {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            gap: 20px;
-        }
-
-        .team-select select {
-            padding: 8px;
-            font-size: 16px;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-            flex: 1;
-        }
-
-        .vs {
-            font-size: 20px;
-            font-weight: bold;
-        }
-
-        .start-button {
-            display: block;
-            width: 200px;
-            margin: 20px auto;
-            padding: 10px;
-            font-size: 16px;
-            background-color: #2e7d32;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .start-button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-
-        .game-container {
-            display: none;
-            gap: 20px;
-        }
-
-        .team-container {
-            flex: 1;
+        .stats-section {
+            margin-top: 20px;
+            padding: 15px;
             background-color: white;
-            padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
         }
 
-        .player-select {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 10px;
-            font-size: 16px;
-            border-radius: 4px;
-            border: 1px solid #ccc;
+        .stats-section h3 {
+            color: #1976d2;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 24px;
         }
 
-        .stat-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
+        .live-stats-guide {
+            background-color: #f8f9fa;
+            padding: 15px 20px;
+            border-radius: 8px;
             margin-bottom: 20px;
+            border-left: 4px solid #1976d2;
         }
 
-        .stat-button {
-            padding: 8px 12px;
-            font-size: 14px;
-            background-color: #1976d2;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
+        .live-stats-guide h4 {
+            color: #1976d2;
+            margin: 0 0 10px 0;
+            font-size: 18px;
+            font-weight: 500;
         }
 
-        .stat-button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
+        .live-stats-guide ul {
+            margin: 0;
+            padding-left: 20px;
+            list-style-type: none;
+        }
+
+        .live-stats-guide li {
+            margin: 8px 0;
+            position: relative;
+            padding-left: 25px;
+            line-height: 1.4;
+            color: #555;
+        }
+
+        .live-stats-guide li:before {
+            content: "🏀";
+            position: absolute;
+            left: 0;
+            color: #1976d2;
         }
 
         .stats-table {
@@ -132,189 +97,130 @@
             background-color: #1976d2;
             color: white;
             font-weight: 500;
-        }
-
-        .stats-table tr:last-child td {
-            border-bottom: none;
+            position: sticky;
+            top: 0;
+            z-index: 1;
         }
 
         .stats-table tr:hover {
             background-color: #f5f5f5;
         }
 
-        .stats-section {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .stats-section h3 {
-            color: #1976d2;
-            margin-bottom: 15px;
-        }
-
-        .reset-button {
-            display: none;
-            width: 200px;
-            margin: 20px auto;
-            padding: 10px;
-            font-size: 16px;
-            background-color: #d32f2f;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .websocket-status {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            padding: 10px 20px;
-            border-radius: 4px;
-            color: white;
-            font-weight: bold;
-            display: none;
-        }
-
-        .websocket-status.connected {
-            background-color: #2e7d32;
-            display: block;
-        }
-
-        .websocket-status.disconnected {
-            background-color: #d32f2f;
-            display: block;
-        }
-
-        .websocket-status.connecting {
-            background-color: #ed6c02;
-            display: block;
-        }
-
-        .websocket-controls {
+        .filter-container {
             display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin: 20px 0;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: center;
         }
 
-        .ws-button {
-            padding: 10px 20px;
+        .filter-label {
+            font-weight: bold;
+            color: #666;
+            min-width: 80px;
+        }
+
+        .filter-input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
             font-size: 14px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .ws-button:not(:disabled) {
-            background-color: #1976d2;
-            color: white;
-        }
-
-        .ws-button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-
-        .info {
-            color: #1976d2;
-            text-align: center;
-            padding: 10px;
-            background-color: #e3f2fd;
-            border-radius: 4px;
-            margin: 10px 0;
+            flex: 1;
         }
 
         .error {
-            color: #f44336;
+            color: red;
             text-align: center;
             padding: 10px;
-            background-color: #ffebee;
-            border-radius: 4px;
-            margin: 10px 0;
         }
 
-        .landing-stats-container {
-            margin: 20px 0;
-            padding: 20px;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .landing-stats-container h3 {
-            color: #1976d2;
-            margin-bottom: 20px;
-            text-align: center;
-            font-size: 24px;
-        }
-
-        #teamsStatsTable {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-            background-color: white;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        #teamsStatsTable th,
-        #teamsStatsTable td {
-            padding: 15px;
-            text-align: center;
-            border-bottom: 1px solid #eee;
-        }
-
-        #teamsStatsTable th {
-            background-color: #1976d2;
-            color: white;
-            font-weight: 500;
-        }
-
-        #teamsStatsTable tr:hover {
-            background-color: #f5f5f5;
-        }
-
-        #teamsStatsTable td:first-child {
-            text-align: left;
-            font-weight: bold;
-            color: #1976d2;
+        .last-updated {
+            text-align: right;
+            color: #666;
+            font-size: 12px;
+            margin-top: 5px;
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>NBA Game Simulator</h1>
+        <h1>NBA Stats Dashboard</h1>
     </div>
 
     <div class="container">
-        <div class="team-select">
-            <select id="homeTeam">
-                <option value="">Select Home Team</option>
-            </select>
-            <span class="vs">VS</span>
-            <select id="awayTeam">
-                <option value="">Select Away Team</option>
-            </select>
+        <!-- Live Stats Entry Section -->
+        <div class="stats-section">
+            <h3>Live Stats Entry</h3>
+            <div class="live-stats-guide">
+                <h4>How to Update Game Statistics</h4>
+                <ul>
+                    <li>Select a team from the dropdown menu</li>
+                    <li>Choose a player from that team's roster</li>
+                    <li>Pick the type of stat to update (points, assists, etc.)</li>
+                    <li>Select the game where this event occurred</li>
+                    <li>Changes will appear in the statistics tables below within seconds</li>
+                </ul>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 15px; padding: 15px;">
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <label style="min-width: 100px;">Team:</label>
+                    <select id="testTeam" class="filter-input">
+                        <option value="">Select Team</option>
+                    </select>
+                </div>
+                
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <label style="min-width: 100px;">Player:</label>
+                    <select id="testPlayer" class="filter-input" disabled>
+                        <option value="">Select Team First</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <label style="min-width: 100px;">Event Type:</label>
+                    <select id="testEvent" class="filter-input" onchange="updateValueOptions()">
+                        <option value="point">Points</option>
+                        <option value="assist">Assist</option>
+                        <option value="rebound">Rebound</option>
+                        <option value="steal">Steal</option>
+                        <option value="block">Block</option>
+                        <option value="turnover">Turnover</option>
+                        <option value="minutes_played">Minutes</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <label style="min-width: 100px;">Value:</label>
+                    <select id="testValue" class="filter-input">
+                        <option value="2">2 Points</option>
+                        <option value="3">3 Points</option>
+                        <option value="1">1 Point (Free Throw)</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <label style="min-width: 100px;">Game ID:</label>
+                    <select id="testGameId" class="filter-input">
+                        <option value="">Select Team First</option>
+                    </select>
+                </div>
+
+                <button onclick="sendTestEvent()" style="padding: 12px 24px; background: #1976d2; color: white; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;">
+                    Send Event
+                </button>
+
+                <div id="eventStatus" style="margin-top: 10px; padding: 10px; border-radius: 4px; display: none;"></div>
+            </div>
         </div>
 
-        <div class="websocket-controls">
-            <button id="connectWsButton" class="ws-button">Connect WebSocket</button>
-            <button id="disconnectWsButton" class="ws-button" disabled>Disconnect WebSocket</button>
-        </div>
-
-        <button id="startButton" class="start-button" disabled>Start Game</button>
-        <button id="resetButton" class="reset-button">Stop Game</button>
-
-        <!-- Landing page stats table -->
-        <div id="landingStats" class="landing-stats-container">
-            <div class="stats-section">
-                <h3>NBA Teams Statistics</h3>
-                <table class="stats-table" id="teamsStatsTable">
+        <!-- Teams Section -->
+        <div class="stats-section">
+            <h3>NBA Teams Statistics</h3>
+            <div class="filter-container">
+                <span class="filter-label">Filter Teams:</span>
+                <input type="text" id="teamFilter" class="filter-input" placeholder="Enter team name...">
+            </div>
+            <div class="stats-table-container">
+                <table class="stats-table" id="teamsTable">
                     <thead>
                         <tr>
                             <th>Team</th>
@@ -324,686 +230,710 @@
                             <th>SPG</th>
                             <th>BPG</th>
                             <th>TOPG</th>
+                            <th>MPG</th>
+                            <th>Games</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
                 </table>
             </div>
+            <div class="last-updated" id="teamsLastUpdated"></div>
         </div>
 
-        <div id="gameContainer" class="game-container">
-            <div class="team-container">
-                <h2 id="homeTeamName"></h2>
-                <select id="homePlayer" class="player-select">
-                    <option value="">Select Player</option>
+        <!-- Players Section -->
+        <div class="stats-section">
+            <h3>NBA Players Statistics</h3>
+            <div class="filter-container">
+                <span class="filter-label">Filter Players:</span>
+                <input type="text" id="playerFilter" class="filter-input" placeholder="Enter player name...">
+                <select id="teamFilterSelect" class="filter-input">
+                    <option value="">All Teams</option>
                 </select>
-                <div class="stat-buttons" id="homeStatButtons"></div>
-                
-                <!-- Home Team Stats Section -->
-                <div class="stats-section">
-                    <h3>Team Stats</h3>
-                    <table class="stats-table" id="homeTeamStats">
-                        <thead>
-                            <tr>
-                                <th>Stat</th>
-                                <th>Game Value</th>
-                                <th>Season Avg</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-
-                <!-- Home Players Stats Section -->
-                <div class="stats-section">
-                    <h3>Player Stats</h3>
-                    <table class="stats-table" id="homePlayerStats">
-                        <thead>
-                            <tr>
-                                <th>Player</th>
-                                <th>PTS</th>
-                                <th>AST</th>
-                                <th>REB</th>
-                                <th>STL</th>
-                                <th>BLK</th>
-                                <th>TO</th>
-                                <th>Season PPG</th>
-                                <th>Season APG</th>
-                                <th>Season RPG</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
             </div>
-
-            <div class="team-container">
-                <h2 id="awayTeamName"></h2>
-                <select id="awayPlayer" class="player-select">
-                    <option value="">Select Player</option>
-                </select>
-                <div class="stat-buttons" id="awayStatButtons"></div>
-                
-                <!-- Away Team Stats Section -->
-                <div class="stats-section">
-                    <h3>Team Stats</h3>
-                    <table class="stats-table" id="awayTeamStats">
-                        <thead>
-                            <tr>
-                                <th>Stat</th>
-                                <th>Game Value</th>
-                                <th>Season Avg</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-
-                <!-- Away Players Stats Section -->
-                <div class="stats-section">
-                    <h3>Player Stats</h3>
-                    <table class="stats-table" id="awayPlayerStats">
-                        <thead>
-                            <tr>
-                                <th>Player</th>
-                                <th>PTS</th>
-                                <th>AST</th>
-                                <th>REB</th>
-                                <th>STL</th>
-                                <th>BLK</th>
-                                <th>TO</th>
-                                <th>Season PPG</th>
-                                <th>Season APG</th>
-                                <th>Season RPG</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
+            <div class="stats-table-container">
+                <table class="stats-table" id="playersTable">
+                    <thead>
+                        <tr>
+                            <th>Player</th>
+                            <th>Team</th>
+                            <th>PPG</th>
+                            <th>APG</th>
+                            <th>RPG</th>
+                            <th>SPG</th>
+                            <th>BPG</th>
+                            <th>TOPG</th>
+                            <th>MPG</th>
+                            <th>Games</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
             </div>
+            <div class="last-updated" id="playersLastUpdated"></div>
         </div>
+    </div>
 
-        <div class="websocket-status">WebSocket: Connecting...</div>
+    <script>
+        // Initialize variables
+        window.teams = {}; // Make teams globally accessible
+        const currentSeasonId = "1";
+        let lastTeamsUpdate = null;
+        let lastPlayersUpdate = null;
+        let ws = null;
+        let playersCache = {};
 
-        <script>
-            const teams = {
-                lakers: {
-                    id: '1',
-                    name: 'Los Angeles Lakers',
-                    players: [
-                        { id: '1', name: 'LeBron James', stats: {} },
-                        { id: '2', name: 'Anthony Davis', stats: {} },
-                        { id: '3', name: 'Austin Reaves', stats: {} }
-                    ]
-                },
-                celtics: {
-                    id: '2',
-                    name: 'Boston Celtics',
-                    players: [
-                        { id: '4', name: 'Jayson Tatum', stats: {} },
-                        { id: '5', name: 'Jaylen Brown', stats: {} },
-                        { id: '6', name: 'Kristaps Porzingis', stats: {} }
-                    ]
-                },
-                warriors: {
-                    id: '3',
-                    name: 'Golden State Warriors',
-                    players: [
-                        { id: '7', name: 'Stephen Curry', stats: {} },
-                        { id: '8', name: 'Klay Thompson', stats: {} },
-                        { id: '9', name: 'Draymond Green', stats: {} }
-                    ]
-                },
-                bucks: {
-                    id: '4',
-                    name: 'Milwaukee Bucks',
-                    players: [
-                        { id: '10', name: 'Giannis Antetokounmpo', stats: {} },
-                        { id: '11', name: 'Damian Lillard', stats: {} },
-                        { id: '12', name: 'Khris Middleton', stats: {} }
-                    ]
-                },
-                nuggets: {
-                    id: '5',
-                    name: 'Denver Nuggets',
-                    players: [
-                        { id: '13', name: 'Nikola Jokic', stats: {} },
-                        { id: '14', name: 'Jamal Murray', stats: {} },
-                        { id: '15', name: 'Michael Porter Jr.', stats: {} }
-                    ]
-                }
-            };
+        // Team ID mapping
+        const teamMapping = {
+            'BOS': '1',
+            'LAL': '2',
+            'GSW': '3',
+            'MIA': '5',
+            'PHX': '4'
+        };
 
-            const statTypes = [
-                { id: 'pts2', label: '2 Points', value: 2, type: 'points' },
-                { id: 'pts3', label: '3 Points', value: 3, type: 'points' },
-                { id: 'ast', label: 'Assist', value: 1, type: 'assists' },
-                { id: 'reb', label: 'Rebound', value: 1, type: 'rebounds' },
-                { id: 'stl', label: 'Steal', value: 1, type: 'steals' },
-                { id: 'blk', label: 'Block', value: 1, type: 'blocks' },
-                { id: 'to', label: 'Turnover', value: 1, type: 'turnovers' }
-            ];
+        // Game to teams mapping
+        const gameTeams = {
+            '1': ['1', '2'],  // BOS vs LAL
+            '2': ['2', '1'],  // LAL vs BOS
+            '3': ['1', '3'],  // BOS vs GSW
+            '4': ['3', '1'],  // GSW vs BOS
+            '5': ['4', '5'],  // PHX vs MIA
+            '6': ['2', '4'],  // LAL vs PHX
+            '7': ['5', '3'],  // MIA vs GSW
+            '8': ['1', '4'],  // BOS vs PHX
+            '9': ['5', '2'],  // MIA vs LAL
+            '10': ['4', '4']  // PHX vs PHX
+        };
 
-            let gameState = {
-                homeTeam: '',
-                awayTeam: '',
-                homePlayers: [],
-                awayPlayers: []
-            };
+        // Reverse team mapping for display
+        const teamIdToCode = Object.entries(teamMapping).reduce((acc, [code, id]) => {
+            acc[id] = code;
+            return acc;
+        }, {});
 
-            let ws = null;
-            let selectedPlayer = null;
-            const currentSeasonId = "1"; // Hardcoded season ID
-
-            // DOM Elements
-            const homeTeamSelect = document.getElementById('homeTeam');
-            const awayTeamSelect = document.getElementById('awayTeam');
-            const startButton = document.getElementById('startButton');
-            const resetButton = document.getElementById('resetButton');
-            const gameContainer = document.getElementById('gameContainer');
-            const homePlayerSelect = document.getElementById('homePlayer');
-            const awayPlayerSelect = document.getElementById('awayPlayer');
-            const homeTeamName = document.getElementById('homeTeamName');
-            const awayTeamName = document.getElementById('awayTeamName');
-            const homeStatButtons = document.getElementById('homeStatButtons');
-            const awayStatButtons = document.getElementById('awayStatButtons');
-            const homePlayerStats = document.getElementById('homePlayerStats');
-            const awayPlayerStats = document.getElementById('awayPlayerStats');
-            const connectWsButton = document.getElementById('connectWsButton');
-            const disconnectWsButton = document.getElementById('disconnectWsButton');
-            const gameStats = document.getElementById('gameStats');
-
-            // Initialize landing page stats
-            updateAllTeamsStats();
-
-            function validateTeamSelection() {
-                const homeTeam = homeTeamSelect.value;
-                const awayTeam = awayTeamSelect.value;
-                startButton.disabled = !homeTeam || !awayTeam || homeTeam === awayTeam;
-            }
-
-            function createStatButtons(container, isHome) {
-                container.innerHTML = '';
-                statTypes.forEach(stat => {
-                    const button = document.createElement('button');
-                    button.className = 'stat-button';
-                    button.textContent = stat.label;
-                    button.onclick = () => updateStats(isHome, stat);
-                    container.appendChild(button);
-                });
-            }
-
-            let wsReconnectAttempts = 0;
-            const MAX_RECONNECT_ATTEMPTS = 5;
-            const RECONNECT_DELAY = 1000;
-
-            function updateWebSocketStatus(status) {
-                const statusElement = document.querySelector('.websocket-status');
-                statusElement.className = 'websocket-status ' + status;
-                statusElement.textContent = 'WebSocket: ' + status.charAt(0).toUpperCase() + status.slice(1);
-            }
-
-            function connectWebSocket() {
-                updateWebSocketStatus('connecting');
+        // WebSocket connection and handling
+        function connectWebSocket() {
+            try {
                 ws = new WebSocket('ws://localhost:8082/ws/game_live_update');
                 
                 ws.onopen = () => {
                     console.log('WebSocket connected');
-                    updateWebSocketStatus('connected');
-                    wsReconnectAttempts = 0;
-                    connectWsButton.disabled = true;
-                    disconnectWsButton.disabled = false;
+                    showEventStatus('WebSocket connected successfully!');
                 };
-                
+
+                ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        console.log('WebSocket message received:', data);
+                        
+                        if (data.status === 'success') {
+                            showEventStatus('Event processed successfully!');
+                            Promise.all([
+                                loadTeamsStats(),
+                                loadPlayersStats()
+                            ]).catch(console.error);
+                        } else if (data.status === 'error') {
+                            showEventStatus(data.message, true);
+                            console.error('WebSocket error:', data.message);
+                        }
+                    } catch (error) {
+                        console.error('Error processing WebSocket message:', error);
+                        showEventStatus('Error processing server response', true);
+                    }
+                };
+
                 ws.onclose = () => {
-                    updateWebSocketStatus('disconnected');
-                    connectWsButton.disabled = false;
-                    disconnectWsButton.disabled = true;
+                    console.log('WebSocket disconnected. Attempting to reconnect in 5 seconds...');
+                    showEventStatus('WebSocket disconnected. Reconnecting...', true);
+                    setTimeout(connectWebSocket, 5000);
                 };
-                
+
                 ws.onerror = (error) => {
                     console.error('WebSocket error:', error);
-                    updateWebSocketStatus('disconnected');
-                    connectWsButton.disabled = false;
-                    disconnectWsButton.disabled = true;
+                    showEventStatus('WebSocket error occurred', true);
                 };
+            } catch (error) {
+                console.error('Error establishing WebSocket connection:', error);
+                showEventStatus('Failed to connect to WebSocket', true);
+                setTimeout(connectWebSocket, 5000);
+            }
+        }
+
+        // Function to send game event
+        function sendGameEvent(event) {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                console.error('WebSocket is not connected');
+                return;
+            }
+            try {
+                ws.send(JSON.stringify(event));
+            } catch (error) {
+                console.error('Error sending WebSocket message:', error);
+            }
+        }
+
+        // Function to update players list based on selected team
+        async function updatePlayersList() {
+            const teamSelect = document.getElementById('testTeam');
+            const teamId = teamSelect.value; // Now directly using team ID from server
+            const playerSelect = document.getElementById('testPlayer');
+            
+            console.log('Starting player list update for team ID:', teamId);
+            
+            if (!teamId) {
+                playerSelect.innerHTML = '<option value="">Select Team First</option>';
+                playerSelect.disabled = true;
+                return;
+            }
+            
+            playerSelect.innerHTML = '<option value="">Loading players...</option>';
+            
+            try {
+                console.log('Fetching players from API...');
+                const response = await fetch('http://localhost:8080/api/v1/players');
                 
-                ws.onmessage = handleWebSocketMessage;
-            }
-
-            function disconnectWebSocket() {
-                if (ws) {
-                    ws.close();
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('API Error:', {
+                        status: response.status,
+                        statusText: response.statusText,
+                        body: errorText
+                    });
+                    throw new Error(`Failed to load players: ${response.status} - ${errorText}`);
                 }
-            }
-
-            function handleWebSocketMessage(event) {
-                const data = JSON.parse(event.data);
-                if (data.type === 'statUpdate') {
-                    updatePlayerDisplay(data);
-                    fetchTeamYearlyStats();
-                    fetchPlayerYearlyStats();
-                }
-            }
-
-            function updateStats(isHome, stat) {
-                const playerSelect = isHome ? homePlayerSelect : awayPlayerSelect;
-                const playerId = playerSelect.value;
-                if (!playerId) return;
-
-                const data = {
-                    type: 'statUpdate',
-                    playerId: playerId,
-                    field: stat.type,
-                    value: stat.value,
-                    isHome: isHome
-                };
-
-                if (ws && ws.readyState === WebSocket.OPEN) {
-                    ws.send(JSON.stringify(data));
-                } else {
-                    console.error('WebSocket is not connected');
-                }
-            }
-
-            function updatePlayerDisplay(data) {
-                // Update the appropriate team's stats table
-                if (data.isHome) {
-                    updateTeamStats(homePlayerStats, gameState.homePlayers);
-                } else {
-                    updateTeamStats(awayPlayerStats, gameState.awayPlayers);
-                }
-            }
-
-            function populatePlayerSelect(select, players) {
-                select.innerHTML = '<option value="">Select Player</option>';
                 
-                // Sort players alphabetically
-                const sortedPlayers = [...players].sort((a, b) => a.name.localeCompare(b.name));
-                
-                sortedPlayers.forEach(player => {
-                    const option = document.createElement('option');
-                    option.value = player.id;
-                    option.textContent = player.name;
-                    select.appendChild(option);
+                const allPlayers = await response.json();
+                console.log('API Response:', allPlayers);
+
+                // Simple array check
+                if (!Array.isArray(allPlayers)) {
+                    console.error('Expected array but got:', typeof allPlayers);
+                    throw new Error('Players data is not an array');
+                }
+
+                // Find players for the selected team
+                const teamPlayers = allPlayers.filter(player => {
+                    const hasTeamId = Boolean(player.teamId);
+                    const matchesTeam = player.teamId === teamId;
+                    console.log('Player:', {
+                        name: player.name,
+                        playerId: player.playerId,
+                        teamId: player.teamId,
+                        expectedTeamId: teamId,
+                        hasTeamId,
+                        matchesTeam
+                    });
+                    return matchesTeam;
                 });
-            }
 
-            function startGame() {
-                gameState.homeTeam = homeTeamSelect.value;
-                gameState.awayTeam = awayTeamSelect.value;
-                gameState.homePlayers = JSON.parse(JSON.stringify(teams[gameState.homeTeam].players));
-                gameState.awayPlayers = JSON.parse(JSON.stringify(teams[gameState.awayTeam].players));
-
-                homeTeamName.textContent = teams[gameState.homeTeam].name;
-                awayTeamName.textContent = teams[gameState.awayTeam].name;
-
-                populatePlayerSelect(homePlayerSelect, gameState.homePlayers);
-                populatePlayerSelect(awayPlayerSelect, gameState.awayPlayers);
-
-                createStatButtons(homeStatButtons, true);
-                createStatButtons(awayStatButtons, false);
-
-                gameContainer.style.display = 'flex';
-                document.getElementById('landingStats').style.display = 'none';
-                startButton.style.display = 'none';
-                resetButton.style.display = 'block';
-                homeTeamSelect.disabled = true;
-                awayTeamSelect.disabled = true;
-
-                updateStatsDisplay();
-            }
-
-            function resetGame() {
-                gameState = {
-                    homeTeam: '',
-                    awayTeam: '',
-                    homePlayers: [],
-                    awayPlayers: []
-                };
-
-                gameContainer.style.display = 'none';
-                document.getElementById('landingStats').style.display = 'block';
-                startButton.style.display = 'block';
-                resetButton.style.display = 'none';
-                homeTeamSelect.disabled = false;
-                awayTeamSelect.disabled = false;
-                homeTeamSelect.value = '';
-                awayTeamSelect.value = '';
-                validateTeamSelection();
-
-                // Update landing page stats
-                updateAllTeamsStats();
-            }
-
-            function updateStatsDisplay() {
-                updateTeamStats(homePlayerStats, gameState.homePlayers);
-                updateTeamStats(awayPlayerStats, gameState.awayPlayers);
-            }
-
-            function updateTeamStats(container, players) {
-                const tbody = container.querySelector('tbody');
-                const isHomeTeam = container.id === 'homePlayerStats';
-                const teamId = isHomeTeam ? teams[gameState.homeTeam].id : teams[gameState.awayTeam].id;
+                console.log(`Found ${teamPlayers.length} players for team ID ${teamId}:`, teamPlayers);
                 
-                // Fetch team season stats
-                fetch(`http://localhost:8080/api/v1/teams/${teamId}/stats?seasonId=${currentSeasonId}`)
-                    .then(response => response.json())
-                    .then(teamSeasonStats => {
-                        // Get all player IDs for batch fetch
-                        const playerIds = players.map(p => p.id);
-                        
-                        // Fetch all players' season stats in one request
-                        return fetch(`http://localhost:8080/api/v1/players/stats?seasonId=${currentSeasonId}&playerIds=${playerIds.join(',')}`)
-                            .then(response => response.json())
-                            .then(playerSeasonStats => {
-                                tbody.innerHTML = '';
-                                
-                                // Sort players alphabetically by name
-                                const sortedPlayers = [...players].sort((a, b) => a.name.localeCompare(b.name));
-                                
-                                sortedPlayers.forEach(player => {
-                                    const seasonStats = playerSeasonStats[player.id] || {};
-                                    const row = document.createElement('tr');
-                                    row.innerHTML = `
-                                        <td>${player.name}</td>
-                                        <td>${player.stats.points || 0}</td>
-                                        <td>${player.stats.assists || 0}</td>
-                                        <td>${player.stats.rebounds || 0}</td>
-                                        <td>${player.stats.steals || 0}</td>
-                                        <td>${player.stats.blocks || 0}</td>
-                                        <td>${player.stats.turnovers || 0}</td>
-                                        <td>${seasonStats.ppg?.toFixed(1) || '0.0'}</td>
-                                        <td>${seasonStats.apg?.toFixed(1) || '0.0'}</td>
-                                        <td>${seasonStats.rpg?.toFixed(1) || '0.0'}</td>
-                                    `;
-                                    tbody.appendChild(row);
-                                });
-
-                                // Update team stats table
-                                const teamStatsTable = document.getElementById(isHomeTeam ? 'homeTeamStats' : 'awayTeamStats');
-                                const teamStatsTbody = teamStatsTable.querySelector('tbody');
-                                const stats = [
-                                    { label: 'Points', game: 'points', season: 'ppg' },
-                                    { label: 'Assists', game: 'assists', season: 'apg' },
-                                    { label: 'Rebounds', game: 'rebounds', season: 'rpg' },
-                                    { label: 'Steals', game: 'steals', season: 'spg' },
-                                    { label: 'Blocks', game: 'blocks', season: 'bpg' },
-                                    { label: 'Turnovers', game: 'turnovers', season: 'topg' }
-                                ];
-
-                                teamStatsTbody.innerHTML = '';
-                                stats.forEach(stat => {
-                                    const gameTotal = sortedPlayers.reduce((sum, player) => sum + (player.stats[stat.game] || 0), 0);
-                                    const row = document.createElement('tr');
-                                    row.innerHTML = `
-                                        <td>${stat.label}</td>
-                                        <td>${gameTotal}</td>
-                                        <td>${teamSeasonStats[stat.season]?.toFixed(1) || '0.0'}</td>
-                                    `;
-                                    teamStatsTbody.appendChild(row);
-                                });
-                            });
-                    })
-                    .catch(error => {
-                        console.error('Error updating stats:', error);
-                    });
-            }
-
-            function fetchTeamYearlyStats(teamKey, containerId) {
-                const container = document.getElementById(containerId);
-                const tbody = container.querySelector('tbody');
-                tbody.innerHTML = '';
-
-                const teamId = teams[teamKey].id;
-                
-                fetch(`http://localhost:8080/api/v1/teams/${teamId}/stats?seasonId=${currentSeasonId}`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok');
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        const stats = [
-                            { key: 'ppg', label: 'Points per Game' },
-                            { key: 'apg', label: 'Assists per Game' },
-                            { key: 'rpg', label: 'Rebounds per Game' },
-                            { key: 'spg', label: 'Steals per Game' },
-                            { key: 'bpg', label: 'Blocks per Game' },
-                            { key: 'topg', label: 'Turnovers per Game' }
-                        ];
-                        
-                        stats.forEach(({ key, label }) => {
-                            if (data[key] !== undefined) {
-                                const row = document.createElement('tr');
-                                row.innerHTML = `
-                                    <td>${label}</td>
-                                    <td>${data[key].toFixed(2)}</td>
-                                `;
-                                tbody.appendChild(row);
-                            }
-                        });
-                    })
-                    .catch(error => {
-                        console.error('Error fetching team stats:', error);
-                        tbody.innerHTML = '<tr><td colspan="2" class="error">Failed to load team stats</td></tr>';
-                    });
-            }
-
-            function fetchPlayerYearlyStats(playerId, containerId) {
-                if (!playerId) return;
-                
-                const container = document.getElementById(containerId);
-                if (!container) return;
-                
-                const box = container.closest('.yearly-stats-box');
-                box.classList.add('loading');
-
-                // Find the selected player object
-                let selectedPlayerObj = null;
-                if (gameState.homeTeam) {
-                    selectedPlayerObj = gameState.homePlayers.find(p => p.id === playerId) ||
-                                      gameState.awayPlayers.find(p => p.id === playerId);
-                } else {
-                    // For landing page, look in the teams object
-                    Object.values(teams).forEach(team => {
-                        const found = team.players.find(p => p.id === playerId);
-                        if (found) selectedPlayerObj = found;
-                    });
-                }
-                
-                if (!selectedPlayerObj) {
-                    box.classList.remove('loading');
-                    container.innerHTML = '<div class="error">Player not found</div>';
+                if (teamPlayers.length === 0) {
+                    console.warn('No matching players found');
+                    console.log('Team IDs in response:', allPlayers.map(p => ({
+                        id: p.teamId,
+                        name: p.name
+                    })));
+                    playerSelect.innerHTML = '<option value="">No players found for team</option>';
+                    showEventStatus(`No players found for selected team`, true);
                     return;
                 }
-
-                fetch(`http://localhost:8080/api/v1/players/${playerId}/stats?seasonId=${currentSeasonId}`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok');
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        // Create new content
-                        const newContent = [];
-                        
-                        // Add player name header
-                        newContent.push(`<div class="yearly-stat-item player-name"><strong>${selectedPlayerObj.name}</strong></div>`);
-                        
-                        // Add games played if available
-                        if (data.games !== undefined) {
-                            newContent.push(`<div class="yearly-stat-item"><span>Games Played</span><span>${data.games}</span></div>`);
-                        }
-                        
-                        // Add all available stats
-                        const stats = [
-                            { key: 'ppg', label: 'Points' },
-                            { key: 'apg', label: 'Assists' },
-                            { key: 'rpg', label: 'Rebounds' },
-                            { key: 'spg', label: 'Steals' },
-                            { key: 'bpg', label: 'Blocks' },
-                            { key: 'topg', label: 'Turnovers' }
-                        ];
-                        
-                        stats.forEach(({ key, label }) => {
-                            if (data[key] !== undefined) {
-                                newContent.push(`<div class="yearly-stat-item"><span>${label}</span><span>${data[key].toFixed(2)}</span></div>`);
-                            }
-                        });
-
-                        const newContentString = newContent.join('');
-                        
-                        // Only update if content has changed
-                        if (container.innerHTML !== newContentString) {
-                            container.innerHTML = newContentString;
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error fetching player stats:', error);
-                        container.innerHTML = '<div class="error">Failed to load player stats</div>';
-                    })
-                    .finally(() => {
-                        box.classList.remove('loading');
+                
+                // Update dropdown with found players
+                const options = teamPlayers
+                    .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+                    .map(player => {
+                        const playerName = player.name || 'Unknown Player';
+                        const playerId = player.playerId || '';
+                        console.log('Adding player to dropdown:', { playerName, playerId, teamId: player.teamId });
+                        return `<option value="${playerId}">${playerName}</option>`;
                     });
+
+                playerSelect.innerHTML = `
+                    <option value="">Select Player</option>
+                    ${options.join('')}
+                `;
+                
+                playerSelect.disabled = false;
+                console.log('Player dropdown updated with', options.length, 'players');
+                
+            } catch (error) {
+                console.error('Error in updatePlayersList:', error);
+                playerSelect.innerHTML = '<option value="">Error: ' + error.message + '</option>';
+                playerSelect.disabled = true;
+                showEventStatus('Failed to load players: ' + error.message, true);
             }
+        }
 
-            // Event Listeners
-            homeTeamSelect.addEventListener('change', validateTeamSelection);
-            awayTeamSelect.addEventListener('change', validateTeamSelection);
-            startButton.addEventListener('click', startGame);
-            resetButton.addEventListener('click', resetGame);
-            connectWsButton.addEventListener('click', connectWebSocket);
-            disconnectWsButton.addEventListener('click', disconnectWebSocket);
+        // Function to update game dropdown based on selected team
+        function updateGameDropdown() {
+            const teamSelect = document.getElementById('testTeam');
+            const gameSelect = document.getElementById('testGameId');
+            const selectedTeamId = teamSelect.value;
 
-            homePlayerSelect.addEventListener('change', (e) => {
-                const playerId = e.target.value;
-                if (playerId) {
-                    fetchPlayerYearlyStats(playerId, 'homePlayerYearlyStats');
-                } else {
-                    const container = document.getElementById('homePlayerYearlyStats');
-                    container.innerHTML = '<div class="info">Select a player to view stats</div>';
-                }
+            gameSelect.innerHTML = '<option value="">Select Game</option>';
+
+            if (!selectedTeamId) return;
+
+            // Find games where the selected team participates
+            const availableGames = Object.entries(gameTeams)
+                .filter(([gameId, teamIds]) => teamIds.includes(selectedTeamId))
+                .map(([gameId, teamIds]) => {
+                    // Get team names using the global teams object
+                    const teamNames = teamIds.map(id => {
+                        // Get team from the global teams object
+                        const teamData = window.teams[id];
+                        return teamData ? teamData.name : 'Unknown Team';
+                    }).join(' vs ');
+                    return { gameId, teams: teamNames };
+                });
+
+            availableGames.forEach(({ gameId, teams }) => {
+                const option = document.createElement('option');
+                option.value = gameId;
+                option.textContent = `Game ${gameId}: ${teams}`;
+                gameSelect.appendChild(option);
             });
+        }
 
-            awayPlayerSelect.addEventListener('change', (e) => {
-                const playerId = e.target.value;
-                if (playerId) {
-                    fetchPlayerYearlyStats(playerId, 'awayPlayerYearlyStats');
-                } else {
-                    const container = document.getElementById('awayPlayerYearlyStats');
-                    container.innerHTML = '<div class="info">Select a player to view stats</div>';
-                }
+        // Function to handle team selection change
+        async function handleTeamChange(event) {
+            const teamSelect = document.getElementById('testTeam');
+            const selectedTeam = teamSelect.value;
+            
+            console.log('Team selection changed:', {
+                team: selectedTeam,
+                eventType: event?.type,
+                timestamp: new Date().toISOString()
             });
             
-            // Start polling for stats updates
-            setInterval(() => {
-                if (gameState.homeTeam) {
-                    fetchTeamYearlyStats(gameState.homeTeam, 'homeTeamYearlyStats');
-                    fetchTeamYearlyStats(gameState.awayTeam, 'awayTeamYearlyStats');
-                } else {
-                    updateAllTeamsStats();
+            // Update game dropdown first
+            updateGameDropdown();
+            
+            try {
+                await updatePlayersList();
+            } catch (error) {
+                console.error('Team change handler error:', error);
+                showEventStatus('Error updating players list: ' + error.message, true);
+            }
+        }
+
+        // Function to update value options based on event type
+        function updateValueOptions() {
+            const eventType = document.getElementById('testEvent').value;
+            const valueSelect = document.getElementById('testValue');
+            
+            valueSelect.innerHTML = '';
+            
+            switch(eventType) {
+                case 'point':
+                    valueSelect.innerHTML = `
+                        <option value="2">2 Points</option>
+                        <option value="3">3 Points</option>
+                        <option value="1">1 Point (Free Throw)</option>
+                    `;
+                    break;
+                case 'minutes_played':
+                    valueSelect.innerHTML = Array.from({length: 49}, (_, i) => 
+                        `<option value="${i}">${i} Minutes</option>`
+                    ).join('');
+                    break;
+                default:
+                    valueSelect.innerHTML = `
+                        <option value="1">1 ${eventType.charAt(0).toUpperCase() + eventType.slice(1)}</option>
+                    `;
+            }
+        }
+
+        // Function to show status message
+        function showEventStatus(message, isError = false) {
+            const statusDiv = document.getElementById('eventStatus');
+            statusDiv.style.display = 'block';
+            statusDiv.style.backgroundColor = isError ? '#ffebee' : '#e8f5e9';
+            statusDiv.style.color = isError ? '#c62828' : '#2e7d32';
+            statusDiv.textContent = message;
+            
+            // Hide after 3 seconds
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        // Function to send test event
+        function sendTestEvent() {
+            const teamSelect = document.getElementById('testTeam');
+            const playerSelect = document.getElementById('testPlayer');
+            const teamCode = teamSelect.value;
+            const playerId = playerSelect.value;
+            const eventType = document.getElementById('testEvent').value;
+            const value = parseInt(document.getElementById('testValue').value);
+            const gameId = document.getElementById('testGameId').value;
+            
+            if (!teamCode) {
+                showEventStatus('Please select a team', true);
+                return;
+            }
+            
+            if (!playerId) {
+                showEventStatus('Please select a player', true);
+                return;
+            }
+            
+            if (!gameId) {
+                showEventStatus('Please select a game', true);
+                return;
+            }
+            
+            const testEvent = {
+                gameId: gameId,
+                teamId: teamCode, // Using team ID directly now
+                playerId: playerId,
+                event: eventType,
+                value: value,
+                version: Math.floor(Math.random() * 1000000) + 1
+            };
+            
+            sendGameEvent(testEvent);
+            showEventStatus('Event sent! Stats will update shortly...');
+        }
+
+        // Function to update last updated time
+        function updateLastUpdated(elementId) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+            }
+        }
+
+        // Function to update team dropdown
+        async function updateTeamDropdown() {
+            const teamSelect = document.getElementById('testTeam');
+            if (!teamSelect) return;
+            
+            try {
+                console.log('Fetching teams from server...');
+                const response = await fetch('http://localhost:8080/api/v1/teams');
+                if (!response.ok) {
+                    throw new Error(`Failed to load teams: ${response.status}`);
                 }
-            }, 2000);
-
-            // Update the team selection options
-            function populateTeamSelects() {
-                const homeSelect = document.getElementById('homeTeam');
-                const awaySelect = document.getElementById('awayTeam');
-
-                // Clear existing options except the first one
-                while (homeSelect.options.length > 1) homeSelect.remove(1);
-                while (awaySelect.options.length > 1) awaySelect.remove(1);
-
-                // Convert teams object to array and sort by name
-                const teamsList = Object.entries(teams)
-                    .map(([key, team]) => ({ key, ...team }))
-                    .sort((a, b) => a.name.localeCompare(b.name));
-
-                // Add team options
-                teamsList.forEach(team => {
-                    const homeOption = new Option(team.name, team.key);
-                    const awayOption = new Option(team.name, team.key);
+                const teamsData = await response.json();
+                
+                // Reset teams object and dropdown
+                Object.keys(window.teams).forEach(key => delete window.teams[key]);
+                teamSelect.innerHTML = '<option value="">Select Team</option>';
+                
+                // Process teams
+                if (Array.isArray(teamsData)) {
+                    // Sort teams by name
+                    teamsData.sort((a, b) => a.name.localeCompare(b.name));
                     
-                    homeSelect.add(homeOption);
-                    awaySelect.add(awayOption);
+                    teamsData.forEach(team => {
+                        if (team && team.teamId && team.name) {
+                            // Store team in teams object
+                            window.teams[team.teamId] = {
+                                id: team.teamId,
+                                name: team.name
+                            };
+                            
+                            // Add to team dropdown
+                            const option = document.createElement('option');
+                            option.value = team.teamId;
+                            option.textContent = team.name;
+                            teamSelect.appendChild(option);
+                        }
+                    });
+                }
+                
+                console.log('Teams loaded successfully:', window.teams);
+            } catch (error) {
+                console.error('Error loading teams:', error);
+                teamSelect.innerHTML = '<option value="">Error loading teams</option>';
+                showEventStatus('Failed to load teams: ' + error.message, true);
+            }
+        }
+
+        // Function to update team filter dropdown in players section
+        function updatePlayersTeamFilter() {
+            const teamFilterSelect = document.getElementById('teamFilterSelect');
+            if (!teamFilterSelect) return;
+            
+            // Keep the first "All Teams" option
+            teamFilterSelect.innerHTML = '<option value="">All Teams</option>';
+            
+            // Add hardcoded teams
+            const teamNames = {
+                'BOS': 'Boston Celtics',
+                'LAL': 'Los Angeles Lakers',
+                'GSW': 'Golden State Warriors',
+                'MIA': 'Miami Heat',
+                'PHX': 'Phoenix Suns'
+            };
+            
+            // Add teams sorted by name
+            Object.entries(teamNames)
+                .sort((a, b) => a[1].localeCompare(b[1]))
+                .forEach(([code, name]) => {
+                    const option = document.createElement('option');
+                    option.value = code;
+                    option.textContent = name;
+                    teamFilterSelect.appendChild(option);
+                });
+        }
+
+        // Function to load teams and their stats
+        async function loadTeamsStats() {
+            try {
+                console.log('Loading teams stats...');
+                const response = await fetch('http://localhost:8080/api/v1/teams');
+                if (!response.ok) {
+                    throw new Error(`Failed to load teams: ${response.status}`);
+                }
+                const teamsData = await response.json();
+                
+                // Reset teams object
+                Object.keys(window.teams).forEach(key => delete window.teams[key]);
+                
+                const tbody = document.getElementById('teamsTable').querySelector('tbody');
+                tbody.innerHTML = '';
+                
+                // Process teams and their stats
+                if (Array.isArray(teamsData)) {
+                    for (const team of teamsData) {
+                        if (team && team.teamId && team.name) {
+                            window.teams[team.teamId] = {
+                                id: team.teamId,
+                                name: team.name
+                            };
+                            
+                            try {
+                                const statsResponse = await fetch(`http://localhost:8080/api/v1/teams/${team.teamId}/stats?seasonId=${currentSeasonId}`);
+                                if (!statsResponse.ok) continue;
+                                
+                                const stats = await statsResponse.json();
+                                const row = document.createElement('tr');
+                                row.innerHTML = `
+                                    <td>${team.name}</td>
+                                    <td>${(stats.ppg || 0).toFixed(1)}</td>
+                                    <td>${(stats.apg || 0).toFixed(1)}</td>
+                                    <td>${(stats.rpg || 0).toFixed(1)}</td>
+                                    <td>${(stats.spg || 0).toFixed(1)}</td>
+                                    <td>${(stats.bpg || 0).toFixed(1)}</td>
+                                    <td>${(stats.topg || 0).toFixed(1)}</td>
+                                    <td>${(stats.mpg || 0).toFixed(1)}</td>
+                                    <td>${stats.games || 0}</td>
+                                `;
+                                tbody.appendChild(row);
+                            } catch (error) {
+                                console.error(`Error loading stats for team ${team.name}:`, error);
+                            }
+                        }
+                    }
+                }
+                
+                // Update team filter
+                updateTeamFilter();
+                updateLastUpdated('teamsLastUpdated');
+                lastTeamsUpdate = new Date();
+            } catch (error) {
+                console.error('Error loading teams stats:', error);
+                const tbody = document.getElementById('teamsTable').querySelector('tbody');
+                tbody.innerHTML = '<tr><td colspan="9" class="error">Failed to load teams statistics</td></tr>';
+            }
+        }
+
+        // Function to update team filter
+        function updateTeamFilter() {
+            const teamFilter = document.getElementById('teamFilter');
+            if (!teamFilter) return;
+            
+            // Clear existing options
+            teamFilter.innerHTML = '<option value="">All Teams</option>';
+            
+            // Add teams sorted by name
+            Object.values(window.teams)
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .forEach(team => {
+                    const option = document.createElement('option');
+                    option.value = team.id;
+                    option.textContent = team.name;
+                    teamFilter.appendChild(option);
+                });
+        }
+
+        // Function to load players stats
+        async function loadPlayersStats() {
+            try {
+                console.log('Loading players stats...');
+                const response = await fetch('http://localhost:8080/api/v1/players');
+                
+                // Log the response details
+                console.log('Player list response status:', response.status);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Error response:', errorText);
+                    throw new Error(`Failed to load players: ${response.status} - ${errorText}`);
+                }
+                
+                const players = await response.json();
+                console.log('Loaded players:', players);
+                
+                const tbody = document.getElementById('playersTable').querySelector('tbody');
+                if (!tbody) {
+                    console.error('Players table body not found');
+                    return;
+                }
+                tbody.innerHTML = '';
+                
+                if (!Array.isArray(players)) {
+                    console.error('Received players data:', players);
+                    throw new Error('Players data is not in expected format');
+                }
+
+                // Fetch all player stats in parallel
+                const playerStatsPromises = players.map(async (player) => {
+                    try {
+                        console.log(`Fetching stats for player ${player.name} (ID: ${player.playerId})`);
+                        const statsResponse = await fetch(`http://localhost:8080/api/v1/players/${player.playerId}/stats?seasonId=${currentSeasonId}`);
+                        
+                        if (!statsResponse.ok) {
+                            const errorText = await statsResponse.text();
+                            console.warn(`Failed to load stats for player ${player.name}: ${statsResponse.status} - ${errorText}`);
+                            return null;
+                        }
+                        
+                        const stats = await statsResponse.json();
+                        return { player, stats };
+                    } catch (error) {
+                        console.warn(`Error loading stats for player ${player.name}:`, error);
+                        return null;
+                    }
+                });
+
+                // Wait for all stats to be fetched
+                console.log('Waiting for all player stats to be fetched...');
+                const results = await Promise.allSettled(playerStatsPromises);
+                
+                // Process successful results
+                let successCount = 0;
+                results.forEach(result => {
+                    if (result.status === 'fulfilled' && result.value) {
+                        successCount++;
+                        const { player, stats } = result.value;
+                        const team = window.teams[player.teamId]?.name || 'Unknown Team';
+                        
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${player.name || 'Unknown Player'}</td>
+                            <td>${team}</td>
+                            <td>${(stats.ppg || 0).toFixed(1)}</td>
+                            <td>${(stats.apg || 0).toFixed(1)}</td>
+                            <td>${(stats.rpg || 0).toFixed(1)}</td>
+                            <td>${(stats.spg || 0).toFixed(1)}</td>
+                            <td>${(stats.bpg || 0).toFixed(1)}</td>
+                            <td>${(stats.topg || 0).toFixed(1)}</td>
+                            <td>${(stats.mpg || 0).toFixed(1)}</td>
+                            <td>${stats.games || 0}</td>
+                        `;
+                        tbody.appendChild(row);
+                    }
+                });
+                
+                console.log(`Successfully loaded stats for ${successCount} out of ${players.length} players`);
+                
+                updateLastUpdated('playersLastUpdated');
+                lastPlayersUpdate = new Date();
+            } catch (error) {
+                console.error('Error loading players:', error);
+                const tbody = document.getElementById('playersTable').querySelector('tbody');
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="10" class="error">Failed to load players statistics: ' + error.message + '</td></tr>';
+                }
+                showEventStatus('Failed to load players: ' + error.message, true);
+            }
+        }
+
+        // Function to set up filters
+        function setupFilters() {
+            const teamFilter = document.getElementById('teamFilter');
+            const playerFilter = document.getElementById('playerFilter');
+            const teamFilterSelect = document.getElementById('teamFilterSelect');
+
+            function filterTeams() {
+                const filterText = teamFilter.value.toLowerCase();
+                const rows = document.querySelectorAll('#teamsTable tbody tr');
+                
+                rows.forEach(row => {
+                    const teamName = row.cells[0].textContent.toLowerCase();
+                    row.style.display = teamName.includes(filterText) ? '' : 'none';
                 });
             }
 
-            function updateAllTeamsStats() {
-                const teamsTable = document.getElementById('teamsStatsTable').querySelector('tbody');
+            function filterPlayers() {
+                const nameFilter = playerFilter.value.toLowerCase();
+                const teamFilter = teamFilterSelect.value.toLowerCase();
+                const rows = document.querySelectorAll('#playersTable tbody tr');
                 
-                // Convert teams object to array and sort by name
-                const teamsList = Object.entries(teams)
-                    .map(([key, team]) => ({ key, ...team }))
-                    .sort((a, b) => a.name.localeCompare(b.name));
-                
-                // Fetch all teams stats in a single request
-                fetch(`http://localhost:8080/api/v1/teams/stats?seasonId=${currentSeasonId}`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok');
-                        }
-                        return response.json();
-                    })
-                    .then(allTeamsStats => {
-                        teamsList.forEach(team => {
-                            const teamStats = allTeamsStats[team.id];
-                            const existingRow = teamsTable.querySelector(`[data-team-id="${team.id}"]`);
-                            const statsHtml = `
-                                <td>${team.name}</td>
-                                <td>${teamStats?.ppg ? teamStats.ppg.toFixed(1) : '0.0'}</td>
-                                <td>${teamStats?.apg ? teamStats.apg.toFixed(1) : '0.0'}</td>
-                                <td>${teamStats?.rpg ? teamStats.rpg.toFixed(1) : '0.0'}</td>
-                                <td>${teamStats?.spg ? teamStats.spg.toFixed(1) : '0.0'}</td>
-                                <td>${teamStats?.bpg ? teamStats.bpg.toFixed(1) : '0.0'}</td>
-                                <td>${teamStats?.topg ? teamStats.topg.toFixed(1) : '0.0'}</td>
-                            `;
-
-                            if (existingRow) {
-                                // Only update if content is different
-                                if (existingRow.innerHTML !== statsHtml) {
-                                    existingRow.innerHTML = statsHtml;
-                                }
-                            } else {
-                                const row = document.createElement('tr');
-                                row.setAttribute('data-team-id', team.id);
-                                row.innerHTML = statsHtml;
-                                teamsTable.appendChild(row);
-                            }
-                        });
-                    })
-                    .catch(error => {
-                        console.error('Error fetching all teams stats:', error);
-                        teamsList.forEach(team => {
-                            const existingRow = teamsTable.querySelector(`[data-team-id="${team.id}"]`);
-                            const errorHtml = `
-                                <td>${team.name}</td>
-                                <td colspan="6" class="error">Failed to load stats</td>
-                            `;
-                            
-                            if (existingRow) {
-                                existingRow.innerHTML = errorHtml;
-                            } else {
-                                const row = document.createElement('tr');
-                                row.setAttribute('data-team-id', team.id);
-                                row.innerHTML = errorHtml;
-                                teamsTable.appendChild(row);
-                            }
-                        });
-                    });
+                rows.forEach(row => {
+                    const playerName = row.cells[0].textContent.toLowerCase();
+                    const teamName = row.cells[1].textContent.toLowerCase();
+                    const matchesName = playerName.includes(nameFilter);
+                    const matchesTeam = !teamFilter || teamName.includes(teamFilter);
+                    row.style.display = (matchesName && matchesTeam) ? '' : 'none';
+                });
             }
 
-            // Initialize the page
-            document.addEventListener('DOMContentLoaded', () => {
-                populateTeamSelects();
-                updateAllTeamsStats();
-            });
-        </script>
-    </div>
+            if (teamFilter) teamFilter.addEventListener('input', filterTeams);
+            if (playerFilter) playerFilter.addEventListener('input', filterPlayers);
+            if (teamFilterSelect) teamFilterSelect.addEventListener('change', filterPlayers);
+        }
 
-    <div class="websocket-status">WebSocket: Connecting...</div>
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                console.log('Initializing page...');
+                
+                // Initialize WebSocket connection
+                connectWebSocket();
+                
+                // Initial data load and dropdown setup
+                await updateTeamDropdown();
+                await Promise.all([
+                    loadTeamsStats(),
+                    loadPlayersStats()
+                ]);
+
+                // Set up team change handler
+                const teamSelect = document.getElementById('testTeam');
+                if (teamSelect) {
+                    teamSelect.onchange = () => {
+                        const selectedTeam = teamSelect.value;
+                        if (selectedTeam) {
+                            updateGameDropdown();
+                            updatePlayersList();
+                        }
+                    };
+                }
+                
+                // Populate players team filter dropdown
+                updatePlayersTeamFilter();
+                
+                // Set up filters
+                setupFilters();
+                
+                // Set up refresh intervals for stats tables
+                setInterval(async () => {
+                    console.log('Refreshing stats data...');
+                    await Promise.all([
+                        loadTeamsStats(),
+                        loadPlayersStats()
+                    ]);
+                }, 5000); // Update every 5 seconds
+                
+                console.log('Initialization complete');
+            } catch (error) {
+                console.error('Error during initialization:', error);
+            }
+        });
+    </script>
 </body>
 </html> 

@@ -34,7 +34,7 @@ CREATE TABLE teams (
 
 CREATE TABLE players (
     player_id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
+        name TEXT NOT NULL,
     team_id TEXT REFERENCES teams(team_id),
     jersey_number TEXT,
     position TEXT,

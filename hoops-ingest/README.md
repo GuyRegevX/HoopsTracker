@@ -11,7 +11,7 @@ Real-time basketball statistics ingestion service using WebSocket and Redis Stre
 
 ## Design
 
-### WebSocket Interface
+### WebSocket Interface to recive events
 
 - Endpoint: `ws://localhost:8082/ws/game_live_update`
 - Test Client: `http://localhost:8082/`
@@ -68,7 +68,6 @@ Service will start on port 8082.
 ### Important Notes
 
 - GameIDs must be under 10 characters for Redis compatibility
-- All timestamps must be in ISO-8601 format
 - Events are validated before processing
 - Failed validations are logged but not stored
 
@@ -81,7 +80,6 @@ Service will start on port 8082.
 
 2. Event Processing Issues:
    - Verify event format matches specification
-   - Check gameId length (keep under 10 chars)
    - Validate event type and value range
 
 ## API Documentation

@@ -28,7 +28,6 @@ import lombok.Data;
 })
 @Data
 public abstract class GameEvent {
-
     /**
      * event version
      */
