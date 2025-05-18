@@ -118,10 +118,7 @@ public class TeamsRepositoryImpl implements TeamsRepository {
         stats.setSpg(rs.getDouble("spg"));
         stats.setBpg(rs.getDouble("bpg"));
         stats.setTopg(rs.getDouble("topg"));
-
-        // Set mpg to a default value since it's not in the view
-        stats.setMpg(0.0);  // Alternatively, you could calculate it if you have the data
-
+        stats.setMpg(rs.getDouble("mpg"));
         stats.setLastUpdated(rs.getObject("last_updated", OffsetDateTime.class));
         return stats;
     }
