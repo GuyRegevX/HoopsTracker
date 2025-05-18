@@ -1,256 +1,340 @@
-# HoopsTracker
+# Basketball Stats Tracking API
 
-A real-time basketball statistics tracking system with WebSocket-based event ingestion and Redis Streams processing.
-
-## System Overview
-
-- **Hoops API**: REST API for accessing basketball data
-- **Hoops Ingest**: WebSocket service for real-time game event ingestion
-- **Data Processing**: Redis Streams for real-time event processing
-- **Storage**: TimescaleDB for historical data
-
-## Prerequisites
-
-- Java 21
-- Docker Desktop
-- Gradle 8.6+ (via wrapper)
-
-## Quick Start
-
-1. Start all services:
-```bash
-docker-compose up -d
-```
-
-2. Access points:
-- WebSocket Test Interface: http://localhost:8082/
-- API Service: http://localhost:8080
-- Database UI (pgweb): http://localhost:8084
-- Redis Commander: http://localhost:8083
-
-## Design & Implementation
-
-### WebSocket Test Client
-
-The system includes a built-in test client (`/src/main/resources/static/index.html`) that provides:
-- Real-time WebSocket connection testing
-- Event sending functionality
-- Connection status monitoring
-- Event logging display
-
-#### Event Format
-```json
-{
-  "gameId": "1001",           // Keep under 10 chars for Redis
-  "teamId": "BOS",
-  "playerId": "jt0",
-  "playerName": "Jayson Tatum",
-  "event": "point",          // See supported events below
-  "value": 3,
-  "timestamp": "2024-03-10T21:00:15.321Z"
-}
-```
-
-#### Supported Events
-
-| Event Type      | Value Type | Valid Range    |
-|----------------|------------|----------------|
-| points         | integer    | 1-3           |
-| rebounds       | integer    | ≥ 1           |
-| assists        | integer    | ≥ 1           |
-| steals         | integer    | ≥ 1           |
-| blocks         | integer    | ≥ 1           |
-| fouls          | integer    | 0-6           |
-| minutes_played | float      | 0-48          |
-
-#### Validation Rules
-- All fields are required
-- GameID must be a string under 10 characters
-- Values must be within specified ranges
-- Timestamps must be in ISO-8601 format and not in future
-- Event types must match the supported list
-
-## Testing Guide
-
-### 1. Start Required Services
-
-```bash
-# Start Redis and other dependencies
-docker-compose up -d
-
-# Start the Ingest service
-./gradlew :hoops-ingest:bootRun
-```
-
-### 2. Testing Steps
-
-1. Open `http://localhost:8082/` in your browser
-2. Click "Connect" to establish WebSocket connection
-3. Use test buttons to send events:
-   - "Send Points Event" - Valid 3-point score
-   - "Send Invalid Event" - Invalid 4-point score
-
-### 3. Monitor Results
-
-1. Watch the test client's log window for:
-   - Connection status
-   - Event sending confirmation
-   - Error messages
-
-2. Check Redis Commander (http://localhost:8083) to view:
-   - Stream entries in 'game-events-stream'
-   - Event processing status
-
-### 4. Troubleshooting
-
-1. Connection Issues:
-   - Ensure the page is accessed via `http://localhost:8082/`
-   - Check that the Ingest service is running
-   - Verify Redis is running (`docker-compose ps`)
-
-2. Event Processing Issues:
-   - Check the gameId length (keep under 10 chars)
-   - Verify event type and value range
-   - Check application logs for validation errors
-
-3. Redis Issues:
-   - Open Redis Commander to verify stream contents
-   - Check Redis connection in application logs
-   - Restart Redis if needed: `docker-compose restart redis`
+## Overview
+This API provides real-time basketball statistics tracking for teams and players. It supports both live game stats and historical season averages.
 
 ## Development Setup
 
-1. Configure Git line endings for Windows:
+### Prerequisites
+- Java 24 or higher
+- Docker and Docker Compose
+- Git installed
+- Gardle installed(if you want to run from IDE)
+
+### Running the Application
+1. Start the database and Redis:
 ```bash
-git config --global core.autocrlf true
+docker-compose up -d
 ```
 
-2. Build the project:
+2. Run the application:
 ```bash
-./gradlew build
+./gradlew spring-boot:run
 ```
 
-3. Run services:
+### Testing
+Run the test suite:
 ```bash
-# Run API service
-./gradlew :hoops-api:bootRun
-
-# Run Ingest service
-./gradlew :hoops-ingest:bootRun
+./gradlew test
 ```
 
-## Database Access
+## Test page URL
+```
+http://localhost:8082 
+```
 
-### TimescaleDB
-- URL: http://localhost:8084 (pgweb)
-- Connection Details:
-  - Host: localhost
-  - Port: 5433
-  - Database: hoopsdb
-  - Username: hoops
-  - Password: hoopspass
-  - JDBC URL: jdbc:postgresql://localhost:5433/hoopsdb
+## Authentication
+Currently, the API does not require authentication.
 
-### Redis
-- Commander UI: http://localhost:8083
-- Connection Details:
-  - Host: localhost
-  - Port: 6379
-  - No authentication required
+## Endpoints
+
+### Teams
+
+#### Get Team Stats
+```http
+GET /teams/{teamId}/stats?seasonId={seasonId}
+```
+
+Retrieves average statistics for a specific team in a given season.
+
+**Parameters:**
+- `teamId` (path) - The unique identifier of the team
+- `seasonId` (query) - The season identifier (required)
+
+**Response Format:**
+```json
+{
+    "teamId": "1",
+    "seasonId": "1",
+    "games": 10,
+    "ppg": 105.5,    // Points per game
+    "apg": 24.3,     // Assists per game
+    "rpg": 42.1,     // Rebounds per game
+    "spg": 8.7,      // Steals per game
+    "bpg": 5.2,      // Blocks per game
+    "topg": 13.8,    // Turnovers per game
+    "mpg": 240.0     // Minutes per game
+}
+```
+
+**Status Codes:**
+- 200: Success
+- 404: Team not found
+- 400: Invalid request (missing seasonId)
+- 500: Server error
+
+### Players
+
+#### Get Player Stats
+```http
+GET /players/{playerId}/stats?seasonId={seasonId}
+```
+
+Retrieves average statistics for a specific player in a given season.
+
+**Parameters:**
+- `playerId` (path) - The unique identifier of the player
+- `seasonId` (query) - The season identifier (required)
+
+**Response Format:**
+```json
+{
+    "playerId": "1",
+    "seasonId": "1",
+    "teamId": "1",
+    "games": 10,
+    "ppg": 27.5,     // Points per game
+    "apg": 9.0,      // Assists per game
+    "rpg": 7.0,      // Rebounds per game
+    "spg": 1.5,      // Steals per game
+    "bpg": 1.5,      // Blocks per game
+    "topg": 2.5,     // Turnovers per game
+    "mpg": 31.5      // Minutes per game
+}
+```
+
+**Status Codes:**
+- 200: Success
+- 404: Player not found
+- 400: Invalid request (missing seasonId)
+- 500: Server error
+
+### WebSocket Events
+
+The API also supports real-time updates via WebSocket connection.
+
+#### Connection URL
+```
+ws://localhost:8082/ws/game_live_update
+```
+
+#### Message Format
+All messages should follow this general structure:
+```json
+{
+    "gameId": "2024030100",    // Format: YYYYMMDD00
+    "teamId": "BOS",           // 3-letter team code
+    "playerId": "jt0",         // Player's unique ID
+    "event": "point",          // Event type
+    "value": 3                 // Event value
+}
+```
+
+Available events:
+- `point` (value: 2 or 3)
+- `assist` (value: 1)
+- `rebound` (value: 1)
+- `steal` (value: 1)
+- `block` (value: 1)
+- `turnover` (value: 1)
+- `minutes` (value: 0-48)
+
+
+
+#### Response Messages
+The server will respond with success/error messages in this format:
+```json
+{
+    "status": "success",
+    "message": "Event recorded successfully",
+    "timestamp": "2024-03-01T19:30:00Z"
+}
+```
+
+or for errors:
+```json
+{
+    "status": "error",
+    "message": "Invalid event type",
+    "timestamp": "2024-03-01T19:30:00Z"
+}
+```
 
 ## Data Models
 
-### Team Data Models
+### Team Stats
+| Field    | Type    | Description           |
+|----------|---------|-----------------------|
+| teamId   | string  | Team identifier       |
+| seasonId | string  | Season identifier     |
+| games    | integer | Games played          |
+| ppg      | double  | Points per game       |
+| apg      | double  | Assists per game      |
+| rpg      | double  | Rebounds per game     |
+| spg      | double  | Steals per game       |
+| bpg      | double  | Blocks per game       |
+| topg     | double  | Turnovers per game    |
+| mpg      | double  | Minutes per game      |
 
-#### TeamMetaDTO
-- `teamId`: String - Unique identifier for the team
-- `name`: String - Team name
-- `leagueId`: String - Associated league identifier
-- `leagueName`: String - Name of the league
-- `country`: String - Team's country
-- `lastUpdated`: OffsetDateTime - Last update timestamp
+### Player Stats
+| Field    | Type    | Description           |
+|----------|---------|-----------------------|
+| playerId | string  | Player identifier     |
+| teamId   | string  | Team identifier       |
+| seasonId | string  | Season identifier     |
+| games    | integer | Games played          |
+| ppg      | double  | Points per game       |
+| apg      | double  | Assists per game      |
+| rpg      | double  | Rebounds per game     |
+| spg      | double  | Steals per game       |
+| bpg      | double  | Blocks per game       |
+| topg     | double  | Turnovers per game    |
+| mpg      | double  | Minutes per game      |
 
-#### TeamStatsDTO
-- `teamId`: String - Team identifier
-- `games`: Integer - Number of games played
-- `ppg`: Double - Points per game
-- `apg`: Double - Assists per game
-- `rpg`: Double - Rebounds per game
-- `spg`: Double - Steals per game
-- `bpg`: Double - Blocks per game
-- `topg`: Double - Turnovers per game
-- `mpg`: Double - Minutes per game
+## Error Responses
 
-### Player Data Models
+When an error occurs, the API will return a JSON response with an error message:
 
-#### PlayerMetaDTO
-- `playerId`: String - Unique identifier for the player
-- `name`: String - Player's name
-- `teamId`: String - Associated team identifier
-- `teamName`: String - Name of the team
-- `jerseyNumber`: Integer - Player's jersey number
-- `position`: String - Player's position
-- `active`: Boolean - Player's active status
-- `lastUpdated`: OffsetDateTime - Last update timestamp
+```json
+{
+    "error": "Error message here",
+    "status": 404,
+    "timestamp": "2024-01-20T12:34:56.789Z"
+}
+```
 
-#### PlayerStatsDTO
-- `playerId`: String - Player identifier
-- `games`: Integer - Number of games played
-- `ppg`: Double - Points per game
-- `apg`: Double - Assists per game
-- `rpg`: Double - Rebounds per game
-- `spg`: Double - Steals per game
-- `bpg`: Double - Blocks per game
-- `topg`: Double - Turnovers per game
-- `mpg`: Double - Minutes per game
+## Rate Limiting
+Currently, there are no rate limits implemented.
 
-## Contributing
+## Caching
+The API uses Redis caching
 
-1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a new Pull Request
+## Database Schema
 
-## Services
+The application uses TimescaleDB (PostgreSQL extension) for time-series data management. Here's the database schema:
 
-- **hoops-api** (port 8080): REST API for basketball data
-- **hoops-ingest** (port 8082): WebSocket service for real-time event ingestion
-- **hoops-processor** (port 8084): Event processing and enrichment service
+### Core Tables
 
-## Development Tools
+#### leagues
+| Column     | Type      | Description                |
+|------------|-----------|----------------------------|
+| league_id  | TEXT      | Primary Key               |
+| name       | TEXT      | League name               |
+| country    | TEXT      | Country of the league     |
+| created_at | TIMESTAMP | Creation timestamp        |
 
-- **pgweb** (port 9080): Web-based PostgreSQL database viewer
-- **redis-commander** (port 9081): Web-based Redis database management
-- **TimescaleDB** (port 5433): Time-series database for statistics
-- **Redis** (port 6379): In-memory database for caching and streams
+#### seasons
+| Column     | Type      | Description                |
+|------------|-----------|----------------------------|
+| season_id  | TEXT      | Primary Key               |
+| name       | TEXT      | Season name               |
+| start_date | DATE      | Season start date         |
+| end_date   | DATE      | Season end date           |
+| active     | BOOLEAN   | Is current season         |
+| created_at | TIMESTAMP | Creation timestamp        |
 
-## Getting Started
+#### teams
+| Column        | Type      | Description                |
+|---------------|-----------|----------------------------|
+| team_id       | TEXT      | Primary Key               |
+| name          | TEXT      | Team name                 |
+| league_id     | TEXT      | Foreign Key to leagues    |
+| country       | TEXT      | Team's country            |
+| city          | TEXT      | Team's city               |
+| division      | TEXT      | Division                  |
+| conference    | TEXT      | Conference                |
+| arena         | TEXT      | Home arena                |
+| founded_year  | INTEGER   | Year founded              |
+| created_at    | TIMESTAMP | Creation timestamp        |
+| last_updated  | TIMESTAMP | Last update timestamp     |
 
-1. Start the services:
-   ```bash
-   docker-compose up
-   ```
+#### players
+| Column        | Type      | Description                |
+|---------------|-----------|----------------------------|
+| player_id     | TEXT      | Primary Key               |
+| name          | TEXT      | Player name               |
+| team_id       | TEXT      | Foreign Key to teams      |
+| jersey_number | TEXT      | Jersey number             |
+| position      | TEXT      | Playing position          |
+| active        | BOOLEAN   | Is active player          |
+| created_at    | TIMESTAMP | Creation timestamp        |
+| last_updated  | TIMESTAMP | Last update timestamp     |
 
-2. Access the tools:
-   - Database UI: http://localhost:9080
-   - Redis UI: http://localhost:9081
-   - API Docs: http://localhost:8080/swagger-ui.html
-   - WebSocket Test UI: http://localhost:8082
+#### games
+| Column        | Type      | Description                |
+|---------------|-----------|----------------------------|
+| game_id       | TEXT      | Primary Key               |
+| game_date     | DATE      | Game date                 |
+| season_id     | TEXT      | Foreign Key to seasons    |
+| league_id     | TEXT      | Foreign Key to leagues    |
+| home_team_id  | TEXT      | Foreign Key to teams      |
+| away_team_id  | TEXT      | Foreign Key to teams      |
+| start_time    | TIME      | Game start time           |
+| state         | TEXT      | Game state                |
+| created_at    | TIMESTAMP | Creation timestamp        |
+| last_updated  | TIMESTAMP | Last update timestamp     |
 
-## Development Guidelines
+### Time-Series Tables
 
-1. Code Structure:
-   - Follow existing package naming conventions
-   - Use common library for shared code
-   - Implement proper error handling and logging
+#### player_stat_events (Hypertable)
+| Column      | Type      | Description                |
+|-------------|-----------|----------------------------|
+| event_id    | SERIAL    | Event identifier          |
+| player_id   | TEXT      | Foreign Key to players    |
+| game_id     | TEXT      | Foreign Key to games      |
+| team_id     | TEXT      | Foreign Key to teams      |
+| season_id   | TEXT      | Season identifier         |
+| stat_type   | TEXT      | Type of stat              |
+| stat_value  | NUMERIC   | Stat value                |
+| version     | BIGINT    | Event version             |
+| created_at  | TIMESTAMP | Event timestamp (partition)|
 
-2. Data Storage:
-   - Use Redis for caching (24-hour TTL)
-   - TimescaleDB for persistent storage
-   - Follow existing schema conventions
+Valid stat types: point, assist, rebound, steal, block, foul, turnover, minutes_played
 
-3. Testing:
-   - Write unit tests for new functionality
-   - Use test containers for integration tests
-   - Follow existing test naming conventions
+### Materialized Views
+
+#### team_avg_stats_view_per_bucket
+Continuous aggregation of team statistics per day, including:
+- Games played
+- Total points, assists, rebounds, steals, blocks, turnovers
+- Minutes played
+- Updates every 10 minutes
+
+#### player_avg_stats_view_per_bucket
+Continuous aggregation of player statistics per day, similar to team stats
+- Updates every 10 minutes
+
+### Regular Views
+
+#### team_avg_stats_view
+Calculates per-game averages for teams from the bucketed view:
+- Points per game (ppg)
+- Assists per game (apg)
+- Rebounds per game (rpg)
+- Other per-game statistics
+
+#### player_avg_stats_view
+Calculates per-game averages for players from the bucketed view:
+- Points per game (ppg)
+- Assists per game (apg)
+- Rebounds per game (rpg)
+- Other per-game statistics
+
+### Relationships
+```mermaid
+erDiagram
+    leagues ||--o{ teams : has
+    leagues ||--o{ games : hosts
+    seasons ||--o{ games : contains
+    teams ||--o{ players : rosters
+    teams ||--o{ player_stat_events : records
+    players ||--o{ player_stat_events : performs
+    games ||--o{ player_stat_events : generates
+```
+
+### Indexes
+- player_stat_events: game_id, player_id, stat_type
+- games: season_id, league_id
+- players: team_id
+- teams: league_id
+

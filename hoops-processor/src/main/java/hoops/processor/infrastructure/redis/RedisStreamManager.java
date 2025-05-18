@@ -70,11 +70,27 @@ public class RedisStreamManager {
             int count,
             long blockMillis
     ) {
-        return getCommands().xreadgroup(
-                io.lettuce.core.Consumer.from(group, consumer),
-                XReadArgs.Builder.count(count).block(blockMillis),
-                XReadArgs.StreamOffset.lastConsumed(stream)
-        );
+        try {
+            return getCommands().xreadgroup(
+                    io.lettuce.core.Consumer.from(group, consumer),
+                    XReadArgs.Builder.count(count).block(blockMillis),
+                    XReadArgs.StreamOffset.from(stream, ">")
+            );
+        } catch (Exception e) {
+            if (e.getMessage() != null && e.getMessage().contains("NOGROUP")) {
+                log.info("Consumer group {} doesn't exist - creating it", group);
+                createConsumerGroup(stream, group);
+
+                // Try reading again after creating the group
+                return getCommands().xreadgroup(
+                        io.lettuce.core.Consumer.from(group, consumer),
+                        XReadArgs.Builder.count(count).block(0),
+                        XReadArgs.StreamOffset.from(stream, ">")
+                );
+            }
+            log.error("Error reading from consumer group: {} for stream: {}", group, stream, e);
+            throw e;
+        }
     }
 
     public void acknowledgeMessage(String stream, String group, String messageId) {

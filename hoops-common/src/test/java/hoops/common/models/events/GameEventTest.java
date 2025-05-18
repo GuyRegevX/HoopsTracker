@@ -1,5 +1,6 @@
 package hoops.common.models.events;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
@@ -60,5 +61,7 @@ class GameEventTest {
         assertTrue(violations.stream().anyMatch(v -> v.getMessage().contains("Team ID is required")));
         assertTrue(violations.stream().anyMatch(v -> v.getMessage().contains("Player ID is required")));
     }
+
+
 
 } 

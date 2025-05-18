@@ -1,5 +1,6 @@
 package hoops.common.models.events;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Digits;
@@ -11,5 +12,11 @@ public class MinutesPlayedEvent extends GameEvent{
     @Digits(integer = 2, fraction = 1, message = "Minutes played can have at most 1 decimal place")
     public Double getValue() {
         return value;
+    }
+
+    @Override
+    @JsonProperty("event")
+    public String getEvent() {
+        return "minutes_played";
     }
 } 

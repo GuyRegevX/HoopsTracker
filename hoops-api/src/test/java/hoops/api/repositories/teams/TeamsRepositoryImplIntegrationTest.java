@@ -35,12 +35,7 @@ class TeamsRepositoryImplIntegrationTest {
     private static final String KNOWN_SEASON_ID = "1";
     private static final String KNOWN_TEAM_NAME = "Los Angeles Lakers";
     private static final String KNOWN_LEAGUE_ID = "1"; // NBA
-
-    @BeforeEach
-    void setup() {
-        // Refresh materialized views to ensure stats are up-to-date for testing
-        jdbcTemplate.execute("CALL refresh_continuous_aggregate('team_avg_stats_view', NULL, NULL)");
-    }
+ 
 
     @Test
     void getAllTeams_ShouldReturnTeamsFromDatabase() {

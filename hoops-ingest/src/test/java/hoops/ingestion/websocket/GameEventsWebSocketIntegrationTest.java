@@ -115,10 +115,8 @@ class GameEventsWebSocketIntegrationTest {
                 "gameId": "2024030100",
                 "teamId": "BOS",
                 "playerId": "jt0",
-                "playerName": "Jayson Tatum",
                 "event": "point",
-                "value": 3,
-                "timestamp": "%s"
+                "value": 3
             }
             """.formatted(Instant.now().toString());
 

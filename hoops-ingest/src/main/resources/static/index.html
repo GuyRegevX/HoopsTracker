@@ -1,153 +1,1361 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Basketball Stats WebSocket Tester</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NBA Stats Dashboard</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .container { max-width: 800px; margin: 0 auto; }
-        .message-box { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
-        .log { height: 300px; overflow-y: auto; background: #f5f5f5; padding: 10px; margin: 10px 0; }
-        button { padding: 10px; margin: 5px; }
-        .success { color: green; }
-        .error { color: red; }
+        /* NBA.com inspired styles */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+
+        .header {
+            background-color: #1d428a;  /* NBA blue */
+            color: white;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 0;
+            border-radius: 8px 8px 0 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2.2em;
+            font-weight: 600;
+        }
+
+        .nav-links {
+            background-color: #fff;
+            padding: 12px 15px;
+            margin-bottom: 20px;
+            border-radius: 0 0 8px 8px;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .nav-links a {
+            color: #1d428a;
+            text-decoration: none;
+            margin: 0 15px;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .nav-links a:hover {
+            background-color: #f1f6ff;
+            text-decoration: underline;
+        }
+
+        .nav-links span.separator {
+            color: #dee2e6;
+            margin: 0 5px;
+        }
+
+        .section-header {
+            padding: 0 0 15px 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #e9ecef;
+            text-align: center;
+        }
+
+        .section-header h3 {
+            color: #1d428a;
+            font-size: 1.5em;
+            font-weight: 600;
+        }
+
+        .api-url {
+            padding: 15px 0;
+            text-align: center;
+            border-top: 1px solid #eee;
+            margin-top: 25px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .api-url-list {
+            font-size: 12px;
+            color: #666;
+            font-weight: normal;
+            font-family: monospace;
+            text-align: left;
+            line-height: 1.5;
+            grid-column: 1;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .stats-section {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            overflow: hidden;
+            padding: 20px;
+        }
+
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+        }
+
+        .stats-table th {
+            background-color: #1d428a;
+            color: white;
+            font-weight: 500;
+            text-align: left;
+            padding: 12px 15px;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .stats-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.2s;
+        }
+
+        .stats-table tr:hover {
+            background-color: #f1f6ff;
+        }
+
+        .stats-table-container {
+            margin: 15px 0;
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            min-height: 200px;
+            position: relative;
+        }
+
+        .filter-container {
+            padding: 0 0 15px 0;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .filter-label {
+            font-weight: bold;
+            color: #666;
+            min-width: 80px;
+        }
+
+        .filter-input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .filter-input:focus {
+            border-color: #1d428a;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(29, 66, 138, 0.1);
+        }
+
+        .error {
+            color: red;
+            text-align: center;
+            padding: 10px;
+        }
+
+        .last-updated {
+            text-align: right;
+            color: #666;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        /* Add loading overlay styles */
+        .loading-overlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            justify-content: center;
+            align-items: center;
+            z-index: 1;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #1d428a;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Add toast notification styles */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .toast {
+            background: #1d428a;
+            color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px;
+            max-width: 500px;
+            font-family: monospace;
+            white-space: pre;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transform: translateY(100%);
+            transition: all 0.3s ease;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast .json-key {
+            color: #7dd3fc;  /* Light blue */
+        }
+
+        .toast .json-string {
+            color: #86efac;  /* Light green */
+        }
+
+        .toast .json-number {
+            color: #fca5a5;  /* Light red */
+        }
+
+        .data-flow {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+            width: 100%;
+        }
+
+        .data-flow .component {
+            color: #1d428a;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            min-width: 150px;
+        }
+
+        .data-flow .arrow {
+            color: #999;
+            margin: 0 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 5px;
+        }
+
+        .data-flow-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: nowrap;
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        .flow-title {
+            color: #1d428a;
+            font-size: 1.2em;
+            font-weight: 500;
+            margin: 0;
+            padding: 0 0 10px 0;
+            text-align: center;
+            border-bottom: 2px solid #e9ecef;
+            width: 100%;
+        }
+
+        .button-container {
+            padding: 10px 0;
+            text-align: center;
+            width: 100%;
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+        }
+
+        button {
+            background-color: #1d428a !important;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 12px 24px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+            width: 250px;
+        }
+
+        button:hover {
+            background-color: #153166 !important;
+        }
+
+        .live-stats-guide {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px auto;
+            max-width: 500px;
+            border-left: 4px solid #1d428a;
+        }
+
+        .form-controls {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-width: 500px;
+            margin: 0 auto;
+            align-items: center;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .form-row label {
+            min-width: 120px;  /* Increased width to accommodate longest label */
+            color: #666;
+            text-align: right;
+            font-weight: 500;
+            padding-right: 15px;  /* Add consistent right padding */
+            display: inline-block;  /* Ensure padding works properly */
+            box-sizing: border-box;  /* Include padding in width calculation */
+        }
+
+        /* Specific label adjustments to ensure alignment */
+        .form-row label::after {
+            content: ":";  /* Add colon to all labels */
+        }
+
+        .form-row select.filter-input {
+            width: 250px;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+        .redis-icon {
+            display: inline-flex;
+            align-items: center;
+            height: 1em;
+            width: 1em;
+            margin-right: 2px;
+        }
+
+        .redis-icon svg {
+            height: 100%;
+            width: 100%;
+            fill: #dc382d;  /* Redis red color */
+        }
+
+        .redis-small {
+            height: 0.9em;
+            width: 0.9em;
+            vertical-align: middle;
+            margin: 0 2px;
+        }
+
+        .data-flow .component .redis-icon {
+            margin-right: 2px;
+        }
     </style>
 </head>
 <body>
+    <div class="header">
+        <h1>NBA Stats Dashboard</h1>
+    </div>
+    
+    <div class="nav-links">
+        <a href="http://localhost:8080/swagger-ui/index.html" target="_blank">📚 Swagger UI (Players/Teams API)</a>
+        <span class="separator">|</span>
+        <a href="http://localhost:9081" target="_blank">⚡ Redis Commander</a>
+        <span class="separator">|</span>
+        <a href="http://localhost:9080" target="_blank">🗄️ PgWeb (Database)</a>
+    </div>
+
     <div class="container">
-        <h1>Basketball Stats WebSocket Tester</h1>
-        
-        <div class="message-box">
-            <h3>Send Test Event</h3>
-            <button onclick="sendTestEvent()">Send Points Event</button>
-            <button onclick="sendInvalidEvent()">Send Invalid Event</button>
+        <!-- Add toast container -->
+        <div class="toast-container" id="toastContainer"></div>
+
+        <!-- Live Stats Entry Section -->
+        <div class="stats-section">
+            <div class="data-flow">
+                <h4 class="flow-title">Service Flow Chart</h4>
+                <div class="data-flow-container">
+                    <span class="component">
+                        <span class="icon">⚡</span>
+                        Ingest (WS)
+                    </span>
+                    <span class="arrow">→</span>
+                    <span class="component">
+                        <span class="icon">⚡</span>
+                        Redis Streams
+                    </span>
+                    <span class="arrow">→</span>
+                    <span class="component">
+                        <span class="icon">⚡</span>
+                        Processor (Del <svg class="redis-small" viewBox="0 0 32 32"><path d="M32 12.408l-4.612-2.708-3.746 1.869v-2.912l-4.612-2.709-4.612 2.709v-2.709l-4.612-2.709-4.612 2.709v15.454l4.612 2.708 4.612-2.708v2.708l4.612 2.709 4.612-2.709v2.912l3.746-1.869 4.612 2.708v-15.454zm-9.746 8.416l-3.746 1.869v-2.912l-4.612-2.709-4.612 2.709v-2.709l-4.612-2.709-4.612 2.709v-10.146l4.612-2.709 4.612 2.709v2.709l4.612 2.709 4.612-2.709v2.912l3.746-1.869 4.612 2.708v10.146l-4.612-2.708z"/></svg> cache)
+                    </span>
+                    <span class="arrow">→</span>
+                    <span class="component">
+                        <span class="icon">⚡</span>
+                        DB (TimescaleDB)
+                    </span>
+                    <span class="arrow">→</span>
+                    <span class="component">
+                        <span class="icon">⚡</span>
+                        REST API (Populate <svg class="redis-small" viewBox="0 0 32 32"><path d="M32 12.408l-4.612-2.708-3.746 1.869v-2.912l-4.612-2.709-4.612 2.709v-2.709l-4.612-2.709-4.612 2.709v15.454l4.612 2.708 4.612-2.708v2.708l4.612 2.709 4.612-2.709v2.912l3.746-1.869 4.612 2.708v-15.454zm-9.746 8.416l-3.746 1.869v-2.912l-4.612-2.709-4.612 2.709v-2.709l-4.612-2.709-4.612 2.709v-10.146l4.612-2.709 4.612 2.709v2.709l4.612 2.709 4.612-2.709v2.912l3.746-1.869 4.612 2.708v10.146l-4.612-2.708z"/></svg> cache)
+                    </span>
+                </div>
+            </div>
+
+            <div class="section-header">
+                <h3>Live Stats Entry</h3>
+            </div>
+
+            <div class="live-stats-guide">
+                <h4>Quick Guide</h4>
+                <ul>
+                    <li>Select Team</li>
+                    <li>Pick Player</li>
+                    <li>Choose Stat Type</li>
+                    <li>Set Game</li>
+                    <li>Tables auto-update in 5s</li>
+                </ul>
+            </div>
+
+            <div class="form-controls">
+                <div class="form-row">
+                    <label>Team</label>
+                    <select id="testTeam" class="filter-input">
+                        <option value="">Select Team</option>
+                    </select>
+                </div>
+                
+                <div class="form-row">
+                    <label>Player</label>
+                    <select id="testPlayer" class="filter-input" disabled>
+                        <option value="">Select Team First</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <label>Event Type</label>
+                    <select id="testEvent" class="filter-input" onchange="updateValueOptions()">
+                        <option value="point">Points</option>
+                        <option value="assist">Assist</option>
+                        <option value="rebound">Rebound</option>
+                        <option value="steal">Steal</option>
+                        <option value="block">Block</option>
+                        <option value="turnover">Turnover</option>
+                        <option value="minutes_played">Minutes</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <label>Value</label>
+                    <select id="testValue" class="filter-input">
+                        <option value="2">2 Points</option>
+                        <option value="3">3 Points</option>
+                        <option value="1">1 Point (Free Throw)</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <label>Game ID</label>
+                    <select id="testGameId" class="filter-input">
+                        <option value="">Select Team First</option>
+                    </select>
+                </div>
+
+                <div class="button-container">
+                    <button onclick="sendTestEvent()">Send Event</button>
+                </div>
+
+                <div class="api-url">
+                    WebSocket: ws://localhost:8082/ws/game_live_update
+                </div>
+            </div>
+
+            <div id="eventStatus" style="margin-top: 10px; padding: 10px; border-radius: 4px; display: none;"></div>
         </div>
 
-        <div class="message-box">
-            <h3>Connection Status: <span id="status">Disconnected</span></h3>
-            <button onclick="connect()">Connect</button>
-            <button onclick="disconnect()">Disconnect</button>
+        <!-- Teams Section -->
+        <div class="stats-section">
+            <div class="section-header">
+                <h3>NBA Teams Statistics</h3>
+                <div class="api-url-list">
+                    Teams: GET: http://localhost:8080/api/v1/teams<br>
+                    Stats: GET: http://localhost:8080/api/v1/teams/{teamId}/stats
+                </div>
+            </div>
+            <div class="filter-container">
+                <span class="filter-label">Filter Teams:</span>
+                <input type="text" id="teamFilter" class="filter-input" placeholder="Enter team name...">
+            </div>
+            <div class="stats-table-container">
+                <div class="loading-overlay">
+                    <div class="loading-spinner"></div>
+                </div>
+                <table class="stats-table" id="teamsTable">
+                    <thead>
+                        <tr>
+                            <th>Team</th>
+                            <th>PPG</th>
+                            <th>APG</th>
+                            <th>RPG</th>
+                            <th>SPG</th>
+                            <th>BPG</th>
+                            <th>TOPG</th>
+                            <th>MPG</th>
+                            <th>Games</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="last-updated" id="teamsLastUpdated"></div>
         </div>
 
-        <div class="log" id="log"></div>
+        <!-- Players Section -->
+        <div class="stats-section">
+            <div class="section-header">
+                <h3>NBA Players Statistics</h3>
+                <div class="api-url-list">
+                    Players: GET: http://localhost:8080/api/v1/players<br>
+                    Stats: GET: http://localhost:8080/api/v1/players/{playerId}/stats
+                </div>
+            </div>
+            <div class="filter-container">
+                <span class="filter-label">Filter Players:</span>
+                <input type="text" id="playerFilter" class="filter-input" placeholder="Enter player name...">
+                <select id="teamFilterSelect" class="filter-input">
+                    <option value="">All Teams</option>
+                </select>
+            </div>
+            <div class="stats-table-container">
+                <div class="loading-overlay">
+                    <div class="loading-spinner"></div>
+                </div>
+                <table class="stats-table" id="playersTable">
+                    <thead>
+                        <tr>
+                            <th>Player</th>
+                            <th>Team</th>
+                            <th>PPG</th>
+                            <th>APG</th>
+                            <th>RPG</th>
+                            <th>SPG</th>
+                            <th>BPG</th>
+                            <th>TOPG</th>
+                            <th>MPG</th>
+                            <th>Games</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="last-updated" id="playersLastUpdated"></div>
+        </div>
     </div>
 
     <script>
-        let socket = null;
+        // Initialize variables
+        window.teams = {}; // Make teams globally accessible
+        const currentSeasonId = "1";
+        let lastTeamsUpdate = null;
+        let lastPlayersUpdate = null;
+        let ws = null;
+        let playersCache = {};
 
-        function connect() {
-            if (socket) {
-                log('Already connected');
-                return;
-            }
+        // Team ID mapping
+        const teamMapping = {
+            'BOS': '1',
+            'LAL': '2',
+            'GSW': '3',
+            'MIA': '5',
+            'PHX': '4'
+        };
 
+        // Game to teams mapping
+        const gameTeams = {
+            '1': ['1', '2'],  // BOS vs LAL
+            '2': ['2', '1'],  // LAL vs BOS
+            '3': ['1', '3'],  // BOS vs GSW
+            '4': ['3', '1'],  // GSW vs BOS
+            '5': ['4', '5'],  // PHX vs MIA
+            '6': ['2', '4'],  // LAL vs PHX
+            '7': ['5', '3'],  // MIA vs GSW
+            '8': ['1', '4'],  // BOS vs PHX
+            '9': ['5', '2'],  // MIA vs LAL
+            '10': ['4', '4']  // PHX vs PHX
+        };
+
+        // Reverse team mapping for display
+        const teamIdToCode = Object.entries(teamMapping).reduce((acc, [code, id]) => {
+            acc[id] = code;
+            return acc;
+        }, {});
+
+        // WebSocket connection and handling
+        function connectWebSocket() {
             try {
-                const wsUrl = 'ws://localhost:8082/ws/game_live_update';
-                log('Attempting to connect to ' + wsUrl);
-                log('Current page URL: ' + window.location.href);
+                ws = new WebSocket('ws://localhost:8082/ws/game_live_update');
                 
-                socket = new WebSocket(wsUrl);
-                
-                socket.onopen = function() {
-                    document.getElementById('status').textContent = 'Connected';
-                    document.getElementById('status').className = 'success';
-                    log('Successfully connected to WebSocket');
+                ws.onopen = () => {
+                    console.log('WebSocket connected');
+                    showEventStatus('WebSocket connected successfully!');
                 };
 
-                socket.onclose = function(event) {
-                    document.getElementById('status').textContent = 'Disconnected';
-                    document.getElementById('status').className = 'error';
-                    log('Disconnected from WebSocket. Code: ' + event.code + ' Reason: ' + event.reason);
-                    log('Close Event wasClean: ' + event.wasClean);
-                    socket = null;
-                };
-
-                socket.onerror = function(error) {
-                    document.getElementById('status').textContent = 'Error';
-                    document.getElementById('status').className = 'error';
-                    log('WebSocket Error Details:');
-                    log('- Error Name: ' + error.constructor.name);
-                    log('- Error Message: ' + error.message);
-                    // Try to get more error details if available
-                    if (error.target) {
-                        log('- ReadyState: ' + error.target.readyState);
-                        log('- URL: ' + error.target.url);
-                    }
-                    // Attempt to close socket on error
+                ws.onmessage = (event) => {
                     try {
-                        socket.close();
-                    } catch (e) {
-                        log('Error while closing socket: ' + e.message);
+                        const data = JSON.parse(event.data);
+                        console.log('WebSocket message received:', data);
+                        
+                        if (data.status === 'success') {
+                            showEventStatus('Event processed successfully!');
+                            Promise.all([
+                                loadTeamsStats(),
+                                loadPlayersStats()
+                            ]).catch(console.error);
+                        } else if (data.status === 'error') {
+                            showEventStatus(data.message, true);
+                            console.error('WebSocket error:', data.message);
+                        }
+                    } catch (error) {
+                        console.error('Error processing WebSocket message:', error);
+                        showEventStatus('Error processing server response', true);
                     }
-                    socket = null;
                 };
 
-                socket.onmessage = function(event) {
-                    log('Received: ' + event.data);
+                ws.onclose = () => {
+                    console.log('WebSocket disconnected. Attempting to reconnect in 5 seconds...');
+                    showEventStatus('WebSocket disconnected. Reconnecting...', true);
+                    setTimeout(connectWebSocket, 5000);
+                };
+
+                ws.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                    showEventStatus('WebSocket error occurred', true);
                 };
             } catch (error) {
-                document.getElementById('status').textContent = 'Connection Failed';
-                document.getElementById('status').className = 'error';
-                log('Connection Error: ' + error.message);
-                socket = null;
+                console.error('Error establishing WebSocket connection:', error);
+                showEventStatus('Failed to connect to WebSocket', true);
+                setTimeout(connectWebSocket, 5000);
             }
         }
 
-        function disconnect() {
-            if (socket) {
-                socket.close();
-                socket = null;
+        // Function to send game event
+        function sendGameEvent(event) {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                console.error('WebSocket is not connected');
+                return;
+            }
+            try {
+                ws.send(JSON.stringify(event));
+            } catch (error) {
+                console.error('Error sending WebSocket message:', error);
             }
         }
 
+        // Function to update players list based on selected team
+        async function updatePlayersList() {
+            const teamSelect = document.getElementById('testTeam');
+            const teamId = teamSelect.value; // Now directly using team ID from server
+            const playerSelect = document.getElementById('testPlayer');
+            
+            console.log('Starting player list update for team ID:', teamId);
+            
+            if (!teamId) {
+                playerSelect.innerHTML = '<option value="">Select Team First</option>';
+                playerSelect.disabled = true;
+                return;
+            }
+            
+            playerSelect.innerHTML = '<option value="">Loading players...</option>';
+            
+            try {
+                console.log('Fetching players from API...');
+                const response = await fetch('http://localhost:8080/api/v1/players');
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('API Error:', {
+                        status: response.status,
+                        statusText: response.statusText,
+                        body: errorText
+                    });
+                    throw new Error(`Failed to load players: ${response.status} - ${errorText}`);
+                }
+                
+                const allPlayers = await response.json();
+                console.log('API Response:', allPlayers);
+
+                // Simple array check
+                if (!Array.isArray(allPlayers)) {
+                    console.error('Expected array but got:', typeof allPlayers);
+                    throw new Error('Players data is not an array');
+                }
+
+                // Find players for the selected team
+                const teamPlayers = allPlayers.filter(player => {
+                    const hasTeamId = Boolean(player.teamId);
+                    const matchesTeam = player.teamId === teamId;
+                    console.log('Player:', {
+                        name: player.name,
+                        playerId: player.playerId,
+                        teamId: player.teamId,
+                        expectedTeamId: teamId,
+                        hasTeamId,
+                        matchesTeam
+                    });
+                    return matchesTeam;
+                });
+
+                console.log(`Found ${teamPlayers.length} players for team ID ${teamId}:`, teamPlayers);
+                
+                if (teamPlayers.length === 0) {
+                    console.warn('No matching players found');
+                    console.log('Team IDs in response:', allPlayers.map(p => ({
+                        id: p.teamId,
+                        name: p.name
+                    })));
+                    playerSelect.innerHTML = '<option value="">No players found for team</option>';
+                    showEventStatus(`No players found for selected team`, true);
+                    return;
+                }
+                
+                // Update dropdown with found players
+                const options = teamPlayers
+                    .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+                    .map(player => {
+                        const playerName = player.name || 'Unknown Player';
+                        const playerId = player.playerId || '';
+                        console.log('Adding player to dropdown:', { playerName, playerId, teamId: player.teamId });
+                        return `<option value="${playerId}">${playerName}</option>`;
+                    });
+
+                playerSelect.innerHTML = `
+                    <option value="">Select Player</option>
+                    ${options.join('')}
+                `;
+                
+                playerSelect.disabled = false;
+                console.log('Player dropdown updated with', options.length, 'players');
+                
+            } catch (error) {
+                console.error('Error in updatePlayersList:', error);
+                playerSelect.innerHTML = '<option value="">Error: ' + error.message + '</option>';
+                playerSelect.disabled = true;
+                showEventStatus('Failed to load players: ' + error.message, true);
+            }
+        }
+
+        // Function to update game dropdown based on selected team
+        function updateGameDropdown() {
+            const teamSelect = document.getElementById('testTeam');
+            const gameSelect = document.getElementById('testGameId');
+            const selectedTeamId = teamSelect.value;
+
+            gameSelect.innerHTML = '<option value="">Select Game</option>';
+
+            if (!selectedTeamId) return;
+
+            // Find games where the selected team participates
+            const availableGames = Object.entries(gameTeams)
+                .filter(([gameId, teamIds]) => teamIds.includes(selectedTeamId))
+                .map(([gameId, teamIds]) => {
+                    // Get team names using the global teams object
+                    const teamNames = teamIds.map(id => {
+                        // Get team from the global teams object
+                        const teamData = window.teams[id];
+                        return teamData ? teamData.name : 'Unknown Team';
+                    }).join(' vs ');
+                    return { gameId, teams: teamNames };
+                });
+
+            availableGames.forEach(({ gameId, teams }) => {
+                const option = document.createElement('option');
+                option.value = gameId;
+                option.textContent = `Game ${gameId}: ${teams}`;
+                gameSelect.appendChild(option);
+            });
+        }
+
+        // Function to handle team selection change
+        async function handleTeamChange(event) {
+            const teamSelect = document.getElementById('testTeam');
+            const selectedTeam = teamSelect.value;
+            
+            console.log('Team selection changed:', {
+                team: selectedTeam,
+                eventType: event?.type,
+                timestamp: new Date().toISOString()
+            });
+            
+            // Update game dropdown first
+            updateGameDropdown();
+            
+            try {
+                await updatePlayersList();
+            } catch (error) {
+                console.error('Team change handler error:', error);
+                showEventStatus('Error updating players list: ' + error.message, true);
+            }
+        }
+
+        // Function to update value options based on event type
+        function updateValueOptions() {
+            const eventType = document.getElementById('testEvent').value;
+            const valueSelect = document.getElementById('testValue');
+            
+            valueSelect.innerHTML = '';
+            
+            switch(eventType) {
+                case 'point':
+                    valueSelect.innerHTML = `
+                        <option value="2">2 Points</option>
+                        <option value="3">3 Points</option>
+                        <option value="1">1 Point (Free Throw)</option>
+                    `;
+                    break;
+                case 'minutes_played':
+                    valueSelect.innerHTML = Array.from({length: 49}, (_, i) => 
+                        `<option value="${i}">${i} Minutes</option>`
+                    ).join('');
+                    break;
+                default:
+                    valueSelect.innerHTML = `
+                        <option value="1">1 ${eventType.charAt(0).toUpperCase() + eventType.slice(1)}</option>
+                    `;
+            }
+        }
+
+        // Function to show status message
+        function showEventStatus(message, isError = false) {
+            const statusDiv = document.getElementById('eventStatus');
+            statusDiv.style.display = 'block';
+            statusDiv.style.backgroundColor = isError ? '#ffebee' : '#e8f5e9';
+            statusDiv.style.color = isError ? '#c62828' : '#2e7d32';
+            statusDiv.textContent = message;
+            
+            // Hide after 3 seconds
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        // Function to show JSON toast
+        function showJsonToast(data) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            
+            // Pretty print JSON with syntax highlighting
+            const prettyJson = JSON.stringify(data, null, 2)
+                .replace(/(".*?")/g, '<span class="json-string">$1</span>')
+                .replace(/(\d+)/g, '<span class="json-number">$1</span>')
+                .replace(/(".*?"):/g, '<span class="json-key">$1</span>:');
+            
+            toast.innerHTML = `Sent Event Data:\n${prettyJson}`;
+            
+            container.appendChild(toast);
+            
+            // Trigger reflow for animation
+            toast.offsetHeight;
+            toast.classList.add('show');
+            
+            // Remove toast after 5 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    container.removeChild(toast);
+                }, 300);
+            }, 5000);
+        }
+
+        // Function to send test event
         function sendTestEvent() {
-            if (!socket) {
-                log('Not connected');
+            const teamSelect = document.getElementById('testTeam');
+            const playerSelect = document.getElementById('testPlayer');
+            const teamCode = teamSelect.value;
+            const playerId = playerSelect.value;
+            const eventType = document.getElementById('testEvent').value;
+            const value = parseInt(document.getElementById('testValue').value);
+            const gameId = document.getElementById('testGameId').value;
+            
+            if (!teamCode) {
+                showEventStatus('Please select a team', true);
+                return;
+            }
+            
+            if (!playerId) {
+                showEventStatus('Please select a player', true);
+                return;
+            }
+            
+            if (!gameId) {
+                showEventStatus('Please select a game', true);
+                return;
+            }
+            
+            const testEvent = {
+                gameId: gameId,
+                teamId: teamCode,
+                playerId: playerId,
+                event: eventType,
+                value: value,
+                version: Math.floor(Math.random() * 1000000) + 1
+            };
+            
+            // Show JSON toast before sending
+            showJsonToast(testEvent);
+            
+            sendGameEvent(testEvent);
+            showEventStatus('Event sent! Stats will update shortly...');
+        }
+
+        // Function to update last updated time
+        function updateLastUpdated(elementId) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+            }
+        }
+
+        // Function to update team dropdown
+        async function updateTeamDropdown() {
+            const teamSelect = document.getElementById('testTeam');
+            if (!teamSelect) return;
+            
+            try {
+                console.log('Fetching teams from server...');
+                const response = await fetch('http://localhost:8080/api/v1/teams');
+                if (!response.ok) {
+                    throw new Error(`Failed to load teams: ${response.status}`);
+                }
+                const teamsData = await response.json();
+                
+                // Reset teams object and dropdown
+                Object.keys(window.teams).forEach(key => delete window.teams[key]);
+                teamSelect.innerHTML = '<option value="">Select Team</option>';
+                
+                // Process teams
+                if (Array.isArray(teamsData)) {
+                    // Sort teams by name
+                    teamsData.sort((a, b) => a.name.localeCompare(b.name));
+                    
+                    teamsData.forEach(team => {
+                        if (team && team.teamId && team.name) {
+                            // Store team in teams object
+                            window.teams[team.teamId] = {
+                                id: team.teamId,
+                                name: team.name
+                            };
+                            
+                            // Add to team dropdown
+                            const option = document.createElement('option');
+                            option.value = team.teamId;
+                            option.textContent = team.name;
+                            teamSelect.appendChild(option);
+                        }
+                    });
+                }
+                
+                console.log('Teams loaded successfully:', window.teams);
+            } catch (error) {
+                console.error('Error loading teams:', error);
+                teamSelect.innerHTML = '<option value="">Error loading teams</option>';
+                showEventStatus('Failed to load teams: ' + error.message, true);
+            }
+        }
+
+        // Function to update team filter dropdown in players section
+        function updatePlayersTeamFilter() {
+            const teamFilterSelect = document.getElementById('teamFilterSelect');
+            if (!teamFilterSelect) return;
+            
+            // Keep the first "All Teams" option
+            teamFilterSelect.innerHTML = '<option value="">All Teams</option>';
+            
+            // Add teams from the server data
+            Object.values(window.teams)
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .forEach(team => {
+                    const option = document.createElement('option');
+                    option.value = team.id;
+                    option.textContent = team.name;
+                    teamFilterSelect.appendChild(option);
+                });
+        }
+
+        // Function to update table rows smoothly
+        function updateTableRows(tbody, newRows, errorMessage, colspan) {
+            const currentRows = Array.from(tbody.children);
+            
+            // If there's an error, show error message
+            if (errorMessage) {
+                const errorRow = document.createElement('tr');
+                errorRow.innerHTML = `<td colspan="${colspan}" class="error">${errorMessage}</td>`;
+                tbody.innerHTML = '';
+                tbody.appendChild(errorRow);
                 return;
             }
 
-            const event = {
-                // Game ID format: YYYYMMDDGGG where:
-                // YYYY = year, MM = month, DD = day, GGG = game number
-                gameId: "2024031001",
-                teamId: "BOS",
-                playerId: "jt0",
-                playerName: "Jayson Tatum",
-                event: "point",
-                value: 3,
-                timestamp: new Date().toISOString()
-            };
+            // Update existing rows or create new ones
+            newRows.forEach((newRowData, index) => {
+                const existingRow = currentRows[index];
+                if (existingRow) {
+                    // Update existing row cells
+                    Array.from(existingRow.children).forEach((cell, cellIndex) => {
+                        const newValue = newRowData.cells[cellIndex];
+                        if (cell.textContent !== newValue) {
+                            cell.textContent = newValue;
+                            cell.style.backgroundColor = '#e3f2fd';
+                            setTimeout(() => {
+                                cell.style.backgroundColor = '';
+                            }, 500);
+                        }
+                    });
+                } else {
+                    // Create new row
+                    const row = document.createElement('tr');
+                    row.innerHTML = newRowData.html;
+                    tbody.appendChild(row);
+                }
+            });
 
-            socket.send(JSON.stringify(event));
-            log('Sent: ' + JSON.stringify(event));
+            // Remove extra rows if any
+            while (currentRows.length > newRows.length) {
+                tbody.removeChild(tbody.lastChild);
+            }
         }
 
-        function sendInvalidEvent() {
-            if (!socket) {
-                log('Not connected');
-                return;
+        // Modified loadTeamsStats function
+        async function loadTeamsStats() {
+            const tbody = document.getElementById('teamsTable').querySelector('tbody');
+            const container = tbody.closest('.stats-table-container');
+            const loadingOverlay = container.querySelector('.loading-overlay');
+            
+            try {
+                loadingOverlay.style.display = 'flex';
+                console.log('Loading teams stats...');
+                const response = await fetch('http://localhost:8080/api/v1/teams');
+                if (!response.ok) {
+                    throw new Error(`Failed to load teams: ${response.status}`);
+                }
+                const teamsData = await response.json();
+                
+                // Reset teams object
+                Object.keys(window.teams).forEach(key => delete window.teams[key]);
+                
+                const newRows = [];
+                
+                // Process teams and their stats
+                if (Array.isArray(teamsData)) {
+                    for (const team of teamsData) {
+                        if (team && team.teamId && team.name) {
+                            window.teams[team.teamId] = {
+                                id: team.teamId,
+                                name: team.name
+                            };
+                            
+                            try {
+                                const statsResponse = await fetch(`http://localhost:8080/api/v1/teams/${team.teamId}/stats?seasonId=${currentSeasonId}`);
+                                if (!statsResponse.ok) continue;
+                                
+                                const stats = await statsResponse.json();
+                                newRows.push({
+                                    cells: [
+                                        team.name,
+                                        (stats.ppg || 0).toFixed(1),
+                                        (stats.apg || 0).toFixed(1),
+                                        (stats.rpg || 0).toFixed(1),
+                                        (stats.spg || 0).toFixed(1),
+                                        (stats.bpg || 0).toFixed(1),
+                                        (stats.topg || 0).toFixed(1),
+                                        (stats.mpg || 0).toFixed(1),
+                                        stats.games || 0
+                                    ],
+                                    html: `
+                                        <td>${team.name}</td>
+                                        <td>${(stats.ppg || 0).toFixed(1)}</td>
+                                        <td>${(stats.apg || 0).toFixed(1)}</td>
+                                        <td>${(stats.rpg || 0).toFixed(1)}</td>
+                                        <td>${(stats.spg || 0).toFixed(1)}</td>
+                                        <td>${(stats.bpg || 0).toFixed(1)}</td>
+                                        <td>${(stats.topg || 0).toFixed(1)}</td>
+                                        <td>${(stats.mpg || 0).toFixed(1)}</td>
+                                        <td>${stats.games || 0}</td>
+                                    `
+                                });
+                            } catch (error) {
+                                console.error(`Error loading stats for team ${team.name}:`, error);
+                            }
+                        }
+                    }
+                }
+                
+                updateTableRows(tbody, newRows, null, 9);
+                updateTeamFilter();
+                updatePlayersTeamFilter();
+                updateLastUpdated('teamsLastUpdated');
+                lastTeamsUpdate = new Date();
+            } catch (error) {
+                console.error('Error loading teams stats:', error);
+                updateTableRows(tbody, [], 'Failed to load teams statistics', 9);
+            } finally {
+                loadingOverlay.style.display = 'none';
+            }
+        }
+
+        // Function to update team filter
+        function updateTeamFilter() {
+            const teamFilter = document.getElementById('teamFilter');
+            if (!teamFilter) return;
+            
+            // Clear existing options
+            teamFilter.innerHTML = '<option value="">All Teams</option>';
+            
+            // Add teams sorted by name
+            Object.values(window.teams)
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .forEach(team => {
+                    const option = document.createElement('option');
+                    option.value = team.id;
+                    option.textContent = team.name;
+                    teamFilter.appendChild(option);
+                });
+        }
+
+        // Modified loadPlayersStats function
+        async function loadPlayersStats() {
+            const tbody = document.getElementById('playersTable').querySelector('tbody');
+            const container = tbody.closest('.stats-table-container');
+            const loadingOverlay = container.querySelector('.loading-overlay');
+            
+            try {
+                loadingOverlay.style.display = 'flex';
+                console.log('Loading players stats...');
+
+                // First, ensure we have fresh team data
+                const teamsResponse = await fetch('http://localhost:8080/api/v1/teams');
+                if (!teamsResponse.ok) {
+                    throw new Error(`Failed to load teams: ${teamsResponse.status}`);
+                }
+                const teamsData = await teamsResponse.json();
+                
+                // Create teams lookup map
+                const teamsMap = {};
+                teamsData.forEach(team => {
+                    teamsMap[team.teamId] = team.name;
+                });
+
+                // Now load players
+                const response = await fetch('http://localhost:8080/api/v1/players');
+                if (!response.ok) {
+                    throw new Error(`Failed to load players: ${response.status}`);
+                }
+                
+                const players = await response.json();
+                const newRows = [];
+                
+                // Fetch all player stats in parallel
+                const playerStatsPromises = players.map(async (player) => {
+                    try {
+                        const statsResponse = await fetch(`http://localhost:8080/api/v1/players/${player.playerId}/stats?seasonId=${currentSeasonId}`);
+                        if (!statsResponse.ok) return null;
+                        const stats = await statsResponse.json();
+                        return { player, stats };
+                    } catch (error) {
+                        console.warn(`Error loading stats for player ${player.name}:`, error);
+                        return null;
+                    }
+                });
+
+                const results = await Promise.allSettled(playerStatsPromises);
+                
+                results.forEach(result => {
+                    if (result.status === 'fulfilled' && result.value) {
+                        const { player, stats } = result.value;
+                        // Use the teamsMap to get team name
+                        const teamName = teamsMap[player.teamId] || 'Team Not Found';
+                        
+                        newRows.push({
+                            cells: [
+                                player.name || 'Unknown Player',
+                                teamName,
+                                (stats.ppg || 0).toFixed(1),
+                                (stats.apg || 0).toFixed(1),
+                                (stats.rpg || 0).toFixed(1),
+                                (stats.spg || 0).toFixed(1),
+                                (stats.bpg || 0).toFixed(1),
+                                (stats.topg || 0).toFixed(1),
+                                (stats.mpg || 0).toFixed(1),
+                                stats.games || 0
+                            ],
+                            html: `
+                                <td>${player.name || 'Unknown Player'}</td>
+                                <td>${teamName}</td>
+                                <td>${(stats.ppg || 0).toFixed(1)}</td>
+                                <td>${(stats.apg || 0).toFixed(1)}</td>
+                                <td>${(stats.rpg || 0).toFixed(1)}</td>
+                                <td>${(stats.spg || 0).toFixed(1)}</td>
+                                <td>${(stats.bpg || 0).toFixed(1)}</td>
+                                <td>${(stats.topg || 0).toFixed(1)}</td>
+                                <td>${(stats.mpg || 0).toFixed(1)}</td>
+                                <td>${stats.games || 0}</td>
+                            `
+                        });
+                    }
+                });
+                
+                updateTableRows(tbody, newRows, null, 10);
+                updateLastUpdated('playersLastUpdated');
+                lastPlayersUpdate = new Date();
+            } catch (error) {
+                console.error('Error loading players:', error);
+                updateTableRows(tbody, [], 'Failed to load players statistics: ' + error.message, 10);
+            } finally {
+                loadingOverlay.style.display = 'none';
+            }
+        }
+
+        // Function to set up filters
+        function setupFilters() {
+            const teamFilter = document.getElementById('teamFilter');
+            const playerFilter = document.getElementById('playerFilter');
+            const teamFilterSelect = document.getElementById('teamFilterSelect');
+
+            function filterTeams() {
+                const filterText = teamFilter.value.toLowerCase();
+                const rows = document.querySelectorAll('#teamsTable tbody tr');
+                
+                rows.forEach(row => {
+                    const teamName = row.cells[0].textContent.toLowerCase();
+                    row.style.display = teamName.includes(filterText) ? '' : 'none';
+                });
             }
 
-            const event = {
-                // Using same game ID format for consistency
-                gameId: "2024031001",
-                teamId: "BOS",
-                playerId: "jt0",
-                playerName: "Jayson Tatum",
-                event: "point",
-                value: 4, // Invalid: points must be 1-3
-                timestamp: new Date().toISOString()
-            };
+            function filterPlayers() {
+                const nameFilter = playerFilter.value.toLowerCase().trim();
+                const teamFilter = teamFilterSelect.value;
+                const rows = document.querySelectorAll('#playersTable tbody tr');
+                
+                rows.forEach(row => {
+                    const playerName = row.cells[0].textContent.toLowerCase();
+                    const teamName = row.cells[1].textContent;
+                    
+                    // Show all rows if no filters are active
+                    if (!nameFilter && !teamFilter) {
+                        row.style.display = '';
+                        return;
+                    }
+                    
+                    const matchesName = !nameFilter || playerName.includes(nameFilter);
+                    const matchesTeam = !teamFilter || teamName.includes(teamFilterSelect.options[teamFilterSelect.selectedIndex].text);
+                    row.style.display = (matchesName && matchesTeam) ? '' : 'none';
+                });
+            }
 
-            socket.send(JSON.stringify(event));
-            log('Sent invalid event: ' + JSON.stringify(event));
+            if (teamFilter) teamFilter.addEventListener('input', filterTeams);
+            if (playerFilter) {
+                let filterTimeout;
+                playerFilter.addEventListener('input', () => {
+                    clearTimeout(filterTimeout);
+                    filterTimeout = setTimeout(filterPlayers, 300);
+                });
+            }
+            if (teamFilterSelect) teamFilterSelect.addEventListener('change', filterPlayers);
         }
 
-        function log(message) {
-            const logDiv = document.getElementById('log');
-            const entry = document.createElement('div');
-            entry.textContent = new Date().toLocaleTimeString() + ': ' + message;
-            logDiv.insertBefore(entry, logDiv.firstChild);
-        }
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                console.log('Initializing page...');
+                
+                // Initialize WebSocket connection
+                connectWebSocket();
+                
+                // Initial data load and dropdown setup
+                await updateTeamDropdown();
+                await Promise.all([
+                    loadTeamsStats(),
+                    loadPlayersStats()
+                ]);
+
+                // Set up team change handler
+                const teamSelect = document.getElementById('testTeam');
+                if (teamSelect) {
+                    teamSelect.onchange = () => {
+                        const selectedTeam = teamSelect.value;
+                        if (selectedTeam) {
+                            updateGameDropdown();
+                            updatePlayersList();
+                        }
+                    };
+                }
+                
+                // Populate players team filter dropdown
+                updatePlayersTeamFilter();
+                
+                // Set up filters
+                setupFilters();
+                
+                // Set up refresh intervals for stats tables
+                setInterval(async () => {
+                    console.log('Refreshing stats data...');
+                    await Promise.all([
+                        loadTeamsStats(),
+                        loadPlayersStats()
+                    ]);
+                }, 5000); // Update every 5 seconds
+                
+                console.log('Initialization complete');
+            } catch (error) {
+                console.error('Error during initialization:', error);
+            }
+        });
     </script>
 </body>
 </html> 

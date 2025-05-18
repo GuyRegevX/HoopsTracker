@@ -9,98 +9,93 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class MinutesPlayedEventTest {
+class TurnoversEventTest {
     private static Validator validator;
-    
+
     @BeforeAll
     static void setUp() {
         ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
         validator = factory.getValidator();
     }
-    
-    private MinutesPlayedEvent createValidEvent() {
-        MinutesPlayedEvent event = new MinutesPlayedEvent();
+
+    private TurnoversEvent createValidEvent() {
+        TurnoversEvent event = new TurnoversEvent();
         event.setVersion(123L);
         event.setGameId("2024030100");
         event.setTeamId("BOS");
         event.setPlayerId("jt0");
-        event.setEvent("minutes_played");
+        event.setEvent("turnover");
         return event;
     }
-    
+
     @Test
-    void testValidMinutes() {
-        MinutesPlayedEvent event = createValidEvent();
-        
-        // Test 0 minutes
-        event.setValue(0.0);
+    void testValidTurnovers() {
+        TurnoversEvent event = createValidEvent();
+
+        // Test valid turnover value
+        event.setValue(1.0);
         var violations = validator.validate(event);
-        assertTrue(violations.isEmpty(), "Should validate 0 minutes");
-        
-        // Test typical minutes
-        event.setValue(24.5);
+        assertTrue(violations.isEmpty(), "Should validate 1 turnover");
+
+        // Test multiple turnovers (possible if tracking stats after the fact)
+        event.setValue(2.0);
         violations = validator.validate(event);
-        assertTrue(violations.isEmpty(), "Should validate typical minutes");
-        
-        // Test maximum minutes
-        event.setValue(48.0);
-        violations = validator.validate(event);
-        assertTrue(violations.isEmpty(), "Should validate maximum minutes");
+        assertTrue(violations.isEmpty(), "Should validate multiple turnovers");
     }
-    
+
     @Test
-    void testInvalidMinutes() {
-        MinutesPlayedEvent event = createValidEvent();
-        
-        // Test negative minutes
-        event.setValue(-1.0);
+    void testInvalidTurnovers() {
+        TurnoversEvent event = createValidEvent();
+
+        // Test negative turnovers
+        event.setValue(-1d);
         var violations = validator.validate(event);
-        assertFalse(violations.isEmpty(), "Should not validate negative minutes");
+        assertFalse(violations.isEmpty(), "Should not validate negative assists");
         assertTrue(violations.stream()
-            .anyMatch(v -> v.getMessage().contains("cannot be negative")));
-        
-        // Test more than 48 minutes
-        event.setValue(48.1);
+                .anyMatch(v -> v.getMessage().contains("Turnovers must be at least 1")));
+
+        // Test zero turnovers
+        event.setValue(0d);
         violations = validator.validate(event);
-        assertFalse(violations.isEmpty(), "Should not validate more than 48 minutes");
+        assertFalse(violations.isEmpty(), "Should not validate zero turnovers");
         assertTrue(violations.stream()
-            .anyMatch(v -> v.getMessage().contains("cannot exceed 48")));
-        
-        // Test extremely high minutes
-        event.setValue(100.0);
+                .anyMatch(v -> v.getMessage().contains("Turnovers must be at least 1")));
+
+        // Test fractional turnovers
+        event.setValue(1.5);
         violations = validator.validate(event);
-        assertFalse(violations.isEmpty(), "Should not validate extremely high minutes");
+        assertFalse(violations.isEmpty(), "Should not validate fractional turnovers");
         assertTrue(violations.stream()
-            .anyMatch(v -> v.getMessage().contains("cannot exceed 48")));
+                .anyMatch(v -> v.getMessage().contains("Turnovers must be a whole number")));
     }
 
     @Test
     void testJsonDeserialization() throws Exception {
         var objectMapper = new ObjectMapper();
-        // Create JSON representing a valid fouls event
+        // Create JSON representing a valid turnovers event
         String json = """
             {
                 "version": 123,
                 "gameId": "2024030100",
                 "teamId": "BOS",
                 "playerId": "jt0",
-                "event": "minutes_played",
-                "value": 3.0
+                "event": "turnover",
+                "value": 1.0
             }
             """;
 
-        // Deserialize JSON to FoulsEvent object
+        // Deserialize JSON to TurnoversEvent object
         var event = objectMapper.readValue(json, GameEvent.class);
         // Verify properties were correctly deserialized
         assertEquals(123L, event.getVersion());
         assertEquals("2024030100", event.getGameId());
         assertEquals("BOS", event.getTeamId());
         assertEquals("jt0", event.getPlayerId());
-        assertEquals("minutes_played", event.getEvent());
-        assertEquals(3.0, event.getValue());
+        assertEquals("turnover", event.getEvent());
+        assertEquals(1.0, event.getValue());
 
         // Validate the deserialized object
         var violations = validator.validate(event);
         assertTrue(violations.isEmpty(), "Deserialized event should be valid");
     }
-} 
+}

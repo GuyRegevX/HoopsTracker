@@ -1,6 +1,8 @@
 package hoops.common.models.events;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import hoops.common.models.events.AssistsEvent;
+import hoops.common.models.events.GameEvent;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
@@ -9,98 +11,94 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class MinutesPlayedEventTest {
+class AssistsEventTest {
     private static Validator validator;
-    
+
     @BeforeAll
     static void setUp() {
         ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
         validator = factory.getValidator();
     }
-    
-    private MinutesPlayedEvent createValidEvent() {
-        MinutesPlayedEvent event = new MinutesPlayedEvent();
+
+    private AssistsEvent createValidEvent() {
+        AssistsEvent event = new AssistsEvent();
         event.setVersion(123L);
         event.setGameId("2024030100");
         event.setTeamId("BOS");
         event.setPlayerId("jt0");
-        event.setEvent("minutes_played");
+        event.setEvent("assist");
         return event;
     }
-    
+
     @Test
-    void testValidMinutes() {
-        MinutesPlayedEvent event = createValidEvent();
-        
-        // Test 0 minutes
-        event.setValue(0.0);
+    void testValidAssists() {
+        AssistsEvent event = createValidEvent();
+
+        // Test valid assist value
+        event.setValue(1.0);
         var violations = validator.validate(event);
-        assertTrue(violations.isEmpty(), "Should validate 0 minutes");
-        
-        // Test typical minutes
-        event.setValue(24.5);
+        assertTrue(violations.isEmpty(), "Should validate 1 assist");
+
+        // Test multi-assists (possible in a single play)
+        event.setValue(2.0);
         violations = validator.validate(event);
-        assertTrue(violations.isEmpty(), "Should validate typical minutes");
-        
-        // Test maximum minutes
-        event.setValue(48.0);
-        violations = validator.validate(event);
-        assertTrue(violations.isEmpty(), "Should validate maximum minutes");
+        assertTrue(violations.isEmpty(), "Should validate multiple assists");
     }
-    
+
     @Test
-    void testInvalidMinutes() {
-        MinutesPlayedEvent event = createValidEvent();
-        
-        // Test negative minutes
-        event.setValue(-1.0);
+    void testInvalidAssists() {
+        AssistsEvent event = createValidEvent();
+
+        // Test negative assists
+        event.setValue(-1d);
         var violations = validator.validate(event);
-        assertFalse(violations.isEmpty(), "Should not validate negative minutes");
+        assertFalse(violations.isEmpty(), "Should not validate negative assists");
         assertTrue(violations.stream()
-            .anyMatch(v -> v.getMessage().contains("cannot be negative")));
-        
-        // Test more than 48 minutes
-        event.setValue(48.1);
+                .anyMatch(v -> v.getMessage().contains("Assists must be at least 1")));
+
+        // Test zero assists
+        event.setValue(0d);
         violations = validator.validate(event);
-        assertFalse(violations.isEmpty(), "Should not validate more than 48 minutes");
+        assertFalse(violations.isEmpty(), "Should not validate zero assists");
         assertTrue(violations.stream()
-            .anyMatch(v -> v.getMessage().contains("cannot exceed 48")));
-        
-        // Test extremely high minutes
-        event.setValue(100.0);
+                .anyMatch(v -> v.getMessage().contains("Assists must be at least 1")));
+
+        // Test fractional assists
+        event.setValue(1.5);
         violations = validator.validate(event);
-        assertFalse(violations.isEmpty(), "Should not validate extremely high minutes");
+        assertFalse(violations.isEmpty(), "Should not validate fractional assists");
         assertTrue(violations.stream()
-            .anyMatch(v -> v.getMessage().contains("cannot exceed 48")));
+                .anyMatch(v -> v.getMessage().contains("Assists must be a whole number")));
     }
 
     @Test
     void testJsonDeserialization() throws Exception {
         var objectMapper = new ObjectMapper();
-        // Create JSON representing a valid fouls event
+        // Create JSON representing a valid assists event
         String json = """
             {
                 "version": 123,
                 "gameId": "2024030100",
                 "teamId": "BOS",
                 "playerId": "jt0",
-                "event": "minutes_played",
-                "value": 3.0
+                "event": "assist",
+                "value": 1.0
             }
             """;
 
-        // Deserialize JSON to FoulsEvent object
+        // Deserialize JSON to AssistsEvent object
         var event = objectMapper.readValue(json, GameEvent.class);
         // Verify properties were correctly deserialized
         assertEquals(123L, event.getVersion());
         assertEquals("2024030100", event.getGameId());
         assertEquals("BOS", event.getTeamId());
         assertEquals("jt0", event.getPlayerId());
-        assertEquals("minutes_played", event.getEvent());
-        assertEquals(3.0, event.getValue());
+
+        assertEquals("assist", event.getEvent());
+        assertEquals(1.0, event.getValue());
 
         // Validate the deserialized object
         var violations = validator.validate(event);
         assertTrue(violations.isEmpty(), "Deserialized event should be valid");
     }
-} 
+}
