@@ -63,7 +63,7 @@ Service will start on port 8082.
    - Connect/disconnect WebSocket
    - Send test events
    - Monitor connection status
-   - View event logs
+   - View updates
 
 ### Important Notes
 
