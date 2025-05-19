@@ -30,7 +30,12 @@ Run the test suite:
 
 ## Test page URL
 ```
-http://localhost:8082 
+Open `http://localhost:8082/` in your browser
+   - Use the test interface to:
+   - Connect/disconnect WebSocket
+   - Send test events
+   - Monitor connection status
+   - View DB updates
 ```
 
 ## Authentication
