@@ -59,7 +59,7 @@ public class GameEventWebSocketHandler extends TextWebSocketHandler {
             // Parse JSON to GameEvent object
             GameEvent event = objectMapper.readValue(payload, GameEvent.class);
             
-            // Validate all fields using Jakarta validation
+            // Validate all fields using Jakarta validation. need to add team and player exists
             Set<ConstraintViolation<GameEvent>> violations = validator.validate(event);
             if (violations.isEmpty()) {
                 // Process valid event
