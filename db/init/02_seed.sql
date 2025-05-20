@@ -389,3 +389,11 @@ INSERT INTO player_stat_events (
 ('147', '7', '16', '5', '1', 'minutes_played', 35, '1', '2024-03-22 23:00:00'),
 ('148', '7', '5', '3', '1', 'minutes_played', 36, '1', '2024-03-22 23:00:00'),
 ('149', '7', '6', '3', '1', 'minutes_played', 34, '1', '2024-03-22 23:00:00');
+
+-- After inserting all your seed data, add these commands:
+
+-- Refresh the player stats continuous aggregate
+CALL refresh_continuous_aggregate('player_avg_stats_view_per_bucket', NULL, NULL);
+
+-- Refresh the team stats continuous aggregate
+CALL refresh_continuous_aggregate('team_avg_stats_view_per_bucket', NULL, NULL);

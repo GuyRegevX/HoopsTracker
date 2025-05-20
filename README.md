@@ -3,6 +3,50 @@
 ## Overview
 This API provides real-time basketball statistics tracking for teams and players. It supports both live game stats and historical season averages.
 
+## Application Components
+
+1. **Live Stats Entry**
+   - Interactive form for entering real-time game statistics
+   - Team and player selection dropdowns
+   - Event type selection (points, assists, rebounds, etc.)
+   - Value input based on event type
+   - Game ID selection
+   - Real-time WebSocket connection for instant updates
+
+2. **Teams Statistics**
+   - Comprehensive team performance metrics
+   - Real-time updates of team statistics
+   - Filtering capability by team name
+   - Displays PPG, APG, RPG, SPG, BPG, TOPG, MPG, and Games played
+
+3. **Players Statistics**
+   - Detailed individual player statistics
+   - Real-time updates of player performance
+   - Advanced filtering by player name and team
+   - Shows comprehensive stats including PPG, APG, RPG, SPG, BPG, TOPG, MPG, and Games played
+
+## Data Flow
+
+1. **Ingest Layer (WebSocket)**
+   - Receives real-time game events
+   - Handles live statistics updates
+   - Maintains persistent WebSocket connection
+
+2. **Processing Layer**
+   - Redis Streams for event processing
+   - Real-time data processing and caching
+   - Efficient data distribution
+
+3. **Storage Layer**
+   - TimescaleDB for time-series data storage
+   - Persistent storage of game statistics
+   - Historical data management
+
+4. **API Layer**
+   - RESTful API endpoints for data retrieval
+   - WebSocket endpoint for real-time updates
+   - Swagger UI documentation available
+
 ## Development Setup
 
 ### Prerequisites
