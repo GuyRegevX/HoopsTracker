@@ -5,7 +5,7 @@ This API provides real-time basketball statistics tracking for teams and players
 
 ## Application Components
 
-1. **Live Stats Entry**
+1. **Live Stats Entry(Web Client for testing)**
    - Interactive form for entering real-time game statistics
    - Team and player selection dropdowns
    - Event type selection (points, assists, rebounds, etc.)
@@ -81,6 +81,122 @@ Open `http://localhost:8082/` in your browser
    - Monitor connection status
    - View DB updates
 ```
+
+Test page URL: http://localhost:8082/test.html
+
+## Manual Testing Guide
+
+### Testing WebSocket Connection
+
+1. **Using the Test Page**
+   - Open http://localhost:8082/test.html in your browser
+   - Select a team from the dropdown
+   - Select a player from the populated player dropdown
+   - Choose an event type (points, assists, rebounds, etc.)
+   - Select a value (e.g., 2 points, 3 points)
+   - Click "Send Event" to send data through WebSocket
+
+2. **Using WebSocket Client (e.g., Postman)**
+   - Connect to WebSocket URL: `ws://localhost:8082/ws/game_live_update`
+   - Send test event in JSON format:
+   ```json
+   {
+     "team": "LAL",
+     "player": "LeBron James",
+     "event": "point",
+     "value": 2,
+     "gameId": "2024-03-20-LAL-GSW"
+   }
+   ```
+
+### Testing REST API Endpoints
+
+1. **Get Team Statistics**
+   ```bash
+   # Get all team stats
+   curl http://localhost:8082/api/teams/stats
+
+   # Get specific team stats
+   curl http://localhost:8082/api/teams/stats?team=LAL
+   ```
+
+2. **Get Player Statistics**
+   ```bash
+   # Get all player stats
+   curl http://localhost:8082/api/players/stats
+
+   # Get specific player stats
+   curl http://localhost:8082/api/players/stats?player=LeBron%20James
+
+   # Get player stats for specific team
+   curl http://localhost:8082/api/players/stats?team=LAL
+   ```
+
+3. **Get Game Statistics**
+   ```bash
+   # Get stats for specific game
+   curl http://localhost:8082/api/games/stats?gameId=2024-03-20-LAL-GSW
+   ```
+
+## Verifying Data Updates
+After sending a WebSocket event, you can verify the data was properly recorded by checking these endpoints:
+
+### 1. Check Team Stats
+```bash
+curl http://localhost:8082/api/teams/stats?team=1
+```
+- Look for updated statistics in the response
+- Verify the event type (points, assists, etc.) is reflected in the totals
+- Check if PPG, APG, RPG, etc. are updated correctly
+
+### 2. Check Player Stats
+```bash
+curl http://localhost:8082/api/players/stats?player=1
+```
+- Verify the player's individual statistics are updated
+- Check if the event is reflected in the player's totals
+- Confirm the player's team affiliation is correct
+
+### 3. Check Game Stats
+```bash
+curl http://localhost:8082/api/games/stats?gameId=1
+```
+- Verify the game's event history includes your recent event
+- Check if team and player stats for this game are updated
+- Confirm the game details are correct
+
+## Expected Results
+
+1. **WebSocket Test**
+   - After sending an event, you should see:
+     - Real-time updates in the Teams and Players statistics tables
+     - Updated values for the specific event type
+     - Changes reflected in both team and player statistics
+
+2. **REST API Test**
+   - Team stats should show:
+     - PPG, APG, RPG, SPG, BPG, TOPG, MPG
+     - Total games played
+     - All values should be non-negative
+   - Player stats should show:
+     - Individual player performance metrics
+     - Team affiliation
+     - Games played
+   - Game stats should show:
+     - Team and player performance for the specific game
+     - Event history for the game
+
+### Troubleshooting
+
+1. **WebSocket Issues**
+   - Check if the WebSocket connection is established (browser console)
+   - Verify the event format matches the expected schema
+   - Ensure all required fields are present in the event
+
+2. **REST API Issues**
+   - Verify the server is running on port 8082
+   - Check if the database connection is active
+   - Ensure proper URL encoding for parameters with spaces
 
 ## Authentication
 Currently, the API does not require authentication.
@@ -171,15 +287,15 @@ ws://localhost:8082/ws/game_live_update
 All messages should follow this general structure:
 ```json
 {
-    "gameId": "2024030100",    // Format: YYYYMMDD00
-    "teamId": "BOS",           // 3-letter team code
-    "playerId": "jt0",         // Player's unique ID
-    "event": "point",          // Event type
-    "value": 3                 // Event value
+    "gameId": "1",             // String: Simple numeric ID (e.g., "1", "2", "3")
+    "teamId": "1",             // String: Simple numeric ID (e.g., "1", "2", "3")
+    "playerId": "1",           // String: Simple numeric ID (e.g., "1", "2", "3")
+    "event": "point",          // String: Event type
+    "value": 3                 // Number: Event value
 }
 ```
 
-Available events:
+Available events (all string values):
 - `point` (value: 2 or 3)
 - `assist` (value: 1)
 - `rebound` (value: 1)
@@ -187,8 +303,6 @@ Available events:
 - `block` (value: 1)
 - `turnover` (value: 1)
 - `minutes` (value: 0-48)
-
-
 
 #### Response Messages
 The server will respond with success/error messages in this format:
